@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Scripts de vérification temporaires
+tmp_*
+.check*.js
+
+# Archives de déploiement
+*.zip

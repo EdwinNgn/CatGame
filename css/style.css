@@ -1,0 +1,402 @@
+:root {
+  --bg: #10221c;
+  --panel: #fbf6ec;
+  --ink: #2c3a33;
+  --ink-soft: #6b7d73;
+  --accent: #d98a7b;
+  --accent-dark: #b96a5c;
+  --gold: #e0b664;
+  --radius: 16px;
+  /* La pile emoji est ajoutée partout : sans elle, un emoji absent de la
+     police de texte s'affiche en carré vide sur certains systèmes. */
+  --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+           "Noto Color Emoji", "Android Emoji", sans-serif;
+  --font: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif,
+          var(--emoji);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+#app { width: 100%; max-width: 980px; }
+
+body { min-height: 100%; }
+
+/* ---------- Écrans ---------- */
+.screen { display: none; }
+.screen.is-visible { display: block; }
+.is-hidden { display: none !important; }
+
+/* ---------- Menu ---------- */
+.panel {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 28px 26px;
+  max-width: 460px;
+  margin: 0 auto;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  margin: 0 0 22px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.field { margin-bottom: 18px; }
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.field input[type="text"] {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid #e3dbcd;
+  border-radius: 10px;
+}
+
+.field input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.avatars {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  font-family: var(--emoji);
+  font-size: 22px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 2px solid #e3dbcd;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.avatar:hover { transform: translateY(-2px); }
+
+.avatar[aria-checked="true"] {
+  border-color: var(--accent);
+  background: #fdeeea;
+}
+
+.avatar:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  margin-bottom: 18px;
+  cursor: pointer;
+}
+
+.checkbox input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover { background: var(--accent-dark); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 2px solid #e3dbcd;
+}
+
+.btn-ghost:hover { color: var(--ink); border-color: var(--accent); }
+
+.controls-help {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  list-style: none;
+  background: #f2ebdd;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.9;
+}
+
+.controls-help b { color: var(--ink); }
+
+/* ---------- Jeu ---------- */
+#screen-game { position: relative; }
+
+/* Enveloppe collée à la taille réelle du canvas, pour que le HUD et le
+   bandeau restent alignés sur le plan et non sur la fenêtre. */
+#stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+#screen-game.is-visible { text-align: center; }
+
+/* Le plan est plus haut que large : on le borne aussi en hauteur pour qu'il
+   tienne dans la fenêtre sans défilement. */
+#game-canvas {
+  display: block;
+  margin: 0 auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 82vh;
+  background: #1b2b25;
+  border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+}
+
+/* Bandeau discret au ramassage : ne révèle pas le contenu du cadeau. */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 8px);
+  padding: 9px 16px;
+  background: rgba(251, 246, 236, 0.95);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Les deux boutons de l'annonce, côte à côte. */
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.card-actions .btn {
+  flex: 1;
+  width: auto;
+}
+
+.card-step {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+}
+
+#hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 10px 14px;
+  background: rgba(251, 246, 236, 0.92);
+  border-radius: 12px;
+  pointer-events: none;
+  max-width: 60%;
+}
+
+.hud-counter {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* L'objectif courant de la chaîne de quêtes. */
+.hud-objective {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* Ce que le joueur a dans les mains. */
+.hud-carry {
+  margin-top: 6px;
+  font-family: var(--emoji);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
+.hud-carry:empty { display: none; }
+
+.hud-rooms {
+  margin-top: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.hud-rooms:empty { display: none; }
+
+.hint {
+  margin: 10px 0 0;
+  min-height: 1.4em;
+  text-align: center;
+  font-size: 14px;
+  color: #cfe3d6;
+}
+
+/* ---------- Overlays ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(12, 24, 20, 0.72);
+  backdrop-filter: blur(3px);
+  z-index: 10;
+}
+
+.overlay.is-visible { display: flex; }
+
+.card {
+  position: relative;
+  background: var(--panel);
+  border-radius: 20px;
+  padding: 30px 26px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+  animation: pop 0.28s cubic-bezier(0.2, 1.4, 0.4, 1);
+  z-index: 2;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.85) translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Les icônes des fenêtres : police emoji explicite, et une hauteur de ligne
+   généreuse pour que les grands glyphes ne soient pas rognés en haut. */
+.card-icon {
+  font-family: var(--emoji);
+  font-size: 52px;
+  line-height: 1.25;
+  min-height: 1.25em;
+  margin-bottom: 10px;
+}
+
+.card-icon-xl { font-size: 68px; }
+
+.card-icon:empty { display: none; }
+
+.card-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+
+.card-text {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.card-date {
+  margin: -10px 0 22px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.overlay-final { background: rgba(12, 24, 20, 0.86); }
+
+.card-final { max-width: 440px; }
+
+#confetti-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@media (max-width: 560px) {
+  .panel { padding: 22px 18px; }
+  .title { font-size: 23px; }
+  #hud { top: 8px; left: 8px; padding: 8px 10px; max-width: 68%; }
+  .hud-objective { font-size: 12.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+  * { transition: none !important; }
+}

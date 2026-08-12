@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Une clé, un poisson, un chat</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Écran d'accueil -->
+    <section id="screen-menu" class="screen is-visible">
+      <div class="panel">
+        <h1 class="title">Une clé, un poisson, un chat</h1>
+        <p class="subtitle">Deux portes fermées, un chat qui ne se laisse pas
+          porter, et un secret au fond du couloir. Suivez les étapes,
+          elles vous mèneront jusque-là.</p>
+
+        <div class="field">
+          <label for="p1-name">Joueur 1</label>
+          <input id="p1-name" type="text" maxlength="12" placeholder="Prénom" autocomplete="off">
+          <div class="avatars" id="p1-avatars" role="radiogroup" aria-label="Avatar du joueur 1"></div>
+        </div>
+
+        <label class="checkbox">
+          <input id="two-players" type="checkbox">
+          <span>Jouer à deux sur le même écran</span>
+        </label>
+
+        <div class="field is-hidden" id="p2-field">
+          <label for="p2-name">Joueur 2</label>
+          <input id="p2-name" type="text" maxlength="12" placeholder="Prénom" autocomplete="off">
+          <div class="avatars" id="p2-avatars" role="radiogroup" aria-label="Avatar du joueur 2"></div>
+        </div>
+
+        <button id="btn-start" class="btn btn-primary" type="button">Commencer l'exploration</button>
+
+        <ul class="controls-help">
+          <li><b>Joueur 1</b> : flèches du clavier</li>
+          <li><b>Joueur 2</b> : Z Q S D</li>
+          <li><b>Mobile</b> : glissez le doigt sur l'écran</li>
+          <li>Marchez sur un objet pour le prendre</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Jeu -->
+    <section id="screen-game" class="screen">
+      <div id="stage">
+          <canvas id="game-canvas" width="1184" height="992" aria-label="Plan de l'appartement"></canvas>
+
+        <div id="hud">
+          <div id="hud-step" class="hud-counter"></div>
+          <div id="hud-objective" class="hud-objective"></div>
+          <div id="hud-carry" class="hud-carry"></div>
+          <div id="hud-rooms" class="hud-rooms"></div>
+        </div>
+
+        <div id="toast" class="toast" aria-live="polite"></div>
+      </div>
+
+      <p id="hint" class="hint" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <!-- Ouverture d'un cadeau (séquence finale) -->
+  <div id="modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="card">
+      <p id="modal-step" class="card-step"></p>
+      <div id="modal-icon" class="card-icon" aria-hidden="true"></div>
+      <h2 id="modal-title" class="card-title"></h2>
+      <p id="modal-text" class="card-text"></p>
+      <button id="modal-close" class="btn btn-primary" type="button">Cadeau suivant</button>
+    </div>
+  </div>
+
+  <!-- Révélation finale -->
+  <div id="final" class="overlay overlay-final" role="dialog" aria-modal="true" aria-labelledby="final-title">
+    <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+    <div class="card card-final">
+      <div id="final-icon" class="card-icon card-icon-xl" aria-hidden="true"></div>
+      <h2 id="final-title" class="card-title"></h2>
+      <p id="final-text" class="card-text"></p>
+      <p id="final-date" class="card-date"></p>
+      <div class="card-actions">
+        <button id="final-ok" class="btn btn-primary" type="button">OK</button>
+        <button id="final-replay" class="btn btn-ghost" type="button">Rejouer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/emoji.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/worldgen.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
