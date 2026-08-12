@@ -601,78 +601,138 @@ class World {
 
   /** Landau vu de dessus, avec le bébé endormi à l'intérieur. */
   _drawPram(ctx, cx, cy, size) {
+    // Landau vu de dessus, tête à gauche, pieds à droite.
     const w = size;
-    const h = size * 0.72;
+    const h = size * 0.66;
     const x = cx - w / 2;
     const y = cy - h / 2;
 
-    // Ombre
-    ctx.fillStyle = 'rgba(60,45,30,0.18)';
+    // Ombre au sol
+    ctx.fillStyle = 'rgba(50,38,26,0.2)';
     ctx.beginPath();
-    ctx.ellipse(cx, y + h * 0.96, w * 0.42, h * 0.14, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy + h * 0.52, w * 0.44, h * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Roues
-    ctx.fillStyle = '#3c4349';
-    [[0.16, 0.1], [0.84, 0.1], [0.16, 0.9], [0.84, 0.9]].forEach(([fx, fy]) => {
+    /*
+     * Le châssis, dessiné AVANT la nacelle pour qu'elle le recouvre.
+     * Les roues sont des pastilles allongées posées sur deux essieux
+     * visibles : sans eux, on ne lisait que quatre points isolés aux
+     * quatre coins, sans rapport avec un landau.
+     */
+    const axleY1 = y + h * 0.2;
+    const axleY2 = y + h * 0.8;
+    const wheelR = size * 0.075;
+    const inset = w * 0.2;
+
+    ctx.strokeStyle = '#5a636b';
+    ctx.lineWidth = Math.max(1.6, size * 0.035);
+    ctx.lineCap = 'round';
+    [axleY1, axleY2].forEach((ay) => {
       ctx.beginPath();
-      ctx.arc(x + w * fx, y + h * fy, size * 0.1, 0, Math.PI * 2);
+      ctx.moveTo(x + inset, ay);
+      ctx.lineTo(x + w - inset, ay);
+      ctx.stroke();
+    });
+    // Longeron central, qui relie les deux essieux
+    ctx.beginPath();
+    ctx.moveTo(cx, axleY1);
+    ctx.lineTo(cx, axleY2);
+    ctx.stroke();
+
+    // Roues : ellipses couchées dans le sens de la marche
+    [[x + inset, axleY1], [x + w - inset, axleY1],
+     [x + inset, axleY2], [x + w - inset, axleY2]].forEach(([wx, wy]) => {
+      ctx.fillStyle = '#33393f';
+      ctx.beginPath();
+      ctx.ellipse(wx, wy, wheelR * 1.35, wheelR, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.beginPath();
+      ctx.ellipse(wx, wy, wheelR * 0.45, wheelR * 0.3, 0, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Nacelle
-    this._fillRound(ctx, x + w * 0.08, y + h * 0.14, w * 0.84, h * 0.72, size * 0.2, '#e8eef2');
-    ctx.strokeStyle = '#b9c8d2';
-    ctx.lineWidth = 2;
-    this._roundRect(ctx, x + w * 0.08, y + h * 0.14, w * 0.84, h * 0.72, size * 0.2);
-    ctx.stroke();
-
-    // Capote relevée, côté tête
-    ctx.fillStyle = '#9fc3d6';
+    // Nacelle : ovale, plus lisible qu'un rectangle vu de dessus
+    ctx.fillStyle = '#eef3f6';
     ctx.beginPath();
-    ctx.moveTo(x + w * 0.08, y + h * 0.5);
-    ctx.arc(x + w * 0.3, y + h * 0.5, w * 0.22, Math.PI, 0);
-    ctx.closePath();
+    ctx.ellipse(cx, cy, w * 0.42, h * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    // Couverture
-    this._fillRound(ctx, x + w * 0.42, y + h * 0.24, w * 0.46, h * 0.52, size * 0.12, '#f7ccd6');
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x + w * 0.45, y + h * 0.36);
-    ctx.lineTo(x + w * 0.85, y + h * 0.36);
+    ctx.strokeStyle = '#aebecb';
+    ctx.lineWidth = Math.max(1.5, size * 0.028);
     ctx.stroke();
 
-    // Le bébé : tête, deux yeux fermés et une joue
-    const bx = x + w * 0.33;
-    const by = y + h * 0.5;
-    const br = size * 0.13;
+    /*
+     * Trois zones nettes le long du landau, du plus lisible au plus discret :
+     * capote à gauche, nacelle blanche au milieu (où l'on voit le bébé),
+     * couverture à droite. Les proportions comptent : une capote trop large
+     * mangeait la nacelle et le tout devenait illisible.
+     */
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, w * 0.42, h * 0.42, 0, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Capote : le quart gauche seulement
+    ctx.fillStyle = '#8fb9cf';
+    ctx.beginPath();
+    ctx.ellipse(cx - w * 0.3, cy, w * 0.2, h * 0.44, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = Math.max(1, size * 0.018);
+    ctx.beginPath();
+    ctx.ellipse(cx - w * 0.3, cy, w * 0.12, h * 0.3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Couverture : le tiers droit
+    ctx.fillStyle = '#f7ccd6';
+    ctx.fillRect(cx + w * 0.1, cy - h * 0.45, w * 0.34, h * 0.9);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = Math.max(1.2, size * 0.022);
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.1, cy - h * 0.45);
+    ctx.lineTo(cx + w * 0.1, cy + h * 0.45);
+    ctx.stroke();
+    ctx.restore();
+
+    // Poignée, au pied du landau
+    ctx.strokeStyle = '#6b5647';
+    ctx.lineWidth = Math.max(1.8, size * 0.04);
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.44, cy, h * 0.2, Math.PI * 1.6, Math.PI * 0.4);
+    ctx.stroke();
+
+    // Le bébé, dans la nacelle blanche juste devant la capote
+    const bx = cx - w * 0.06;
+    const by = cy;
+    const br = size * 0.1;
+
     ctx.fillStyle = '#f6d9c0';
     ctx.beginPath();
     ctx.arc(bx, by, br, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(90,65,45,0.75)';
-    ctx.lineWidth = Math.max(1, size * 0.022);
-    [-0.42, 0.42].forEach((o) => {
+    // Yeux fermés
+    ctx.strokeStyle = 'rgba(90,65,45,0.8)';
+    ctx.lineWidth = Math.max(1, size * 0.016);
+    [-0.4, 0.4].forEach((o) => {
       ctx.beginPath();
-      ctx.arc(bx + br * o, by - br * 0.12, br * 0.28, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(bx, by + br * o, br * 0.3, Math.PI * 1.15, Math.PI * 1.85);
       ctx.stroke();
     });
 
-    ctx.fillStyle = 'rgba(226,138,131,0.5)';
-    [-0.6, 0.6].forEach((o) => {
+    // Joues
+    ctx.fillStyle = 'rgba(226,138,131,0.45)';
+    [-0.55, 0.55].forEach((o) => {
       ctx.beginPath();
-      ctx.arc(bx + br * o, by + br * 0.34, br * 0.2, 0, Math.PI * 2);
+      ctx.arc(bx + br * 0.3, by + br * o, br * 0.22, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Mèche de cheveux
+    // Mèche de cheveux, côté capote
     ctx.strokeStyle = '#8a6a4d';
-    ctx.lineWidth = Math.max(1, size * 0.03);
+    ctx.lineWidth = Math.max(1, size * 0.026);
     ctx.beginPath();
-    ctx.arc(bx, by - br * 0.85, br * 0.3, Math.PI * 0.9, Math.PI * 1.9);
+    ctx.arc(bx - br * 0.8, by, br * 0.3, Math.PI * 1.4, Math.PI * 0.6);
     ctx.stroke();
   }
 
