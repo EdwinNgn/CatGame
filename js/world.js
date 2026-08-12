@@ -426,33 +426,58 @@ class World {
     }
 
     if (tile === TILE.TILEFLOOR) {
+      /*
+       * Carrelage gris foncé, franchement froid et un peu plus clair que le
+       * parquet : les deux sols avaient une luminosité quasi identique, on ne
+       * distinguait plus la cuisine du salon.
+       */
       const light = (c + r) % 2 === 0;
-      ctx.fillStyle = light ? '#e7eaec' : '#dde2e6';
+      ctx.fillStyle = light ? '#6f777d' : '#646c72';
       ctx.fillRect(x, y, ts, ts);
-      ctx.strokeStyle = 'rgba(150,160,170,0.35)';
+      ctx.strokeStyle = 'rgba(40,46,50,0.6)';
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 0.5, y + 0.5, ts - 1, ts - 1);
       return;
     }
 
-    // Parquet : lames à joints décalés d'une rangée sur l'autre.
-    const shades = ['#dcc09a', '#d7b992', '#e0c6a2', '#d3b48c'];
-    ctx.fillStyle = shades[(r * 3 + c) % shades.length];
+    /*
+     * Parquet en lames horizontales, brun foncé.
+     *
+     * La teinte ne dépend que de la RANGÉE : une lame garde donc la même
+     * couleur sur toute sa longueur. Avant, elle variait aussi avec la
+     * colonne, ce qui découpait le sol en damier au lieu de lames.
+     */
+    const shades = ['#7a5433', '#8a6039', '#6f4b2d', '#825935'];
+    ctx.fillStyle = shades[r % shades.length];
     ctx.fillRect(x, y, ts, ts);
 
-    ctx.strokeStyle = 'rgba(150,110,70,0.28)';
-    ctx.lineWidth = 1;
+    // Joint entre deux lames : trait sombre continu en haut de la case.
+    ctx.strokeStyle = 'rgba(38,24,12,0.55)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(x, y + 0.5);
-    ctx.lineTo(x + ts, y + 0.5);
+    ctx.moveTo(x, y + 0.75);
+    ctx.lineTo(x + ts, y + 0.75);
     ctx.stroke();
 
+    // Bout de lame : un seul joint vertical, décalé d'une rangée à l'autre,
+    // pour suggérer des longueurs différentes sans casser l'horizontale.
     const offset = (r % 2 === 0) ? 0 : ts / 2;
-    ctx.strokeStyle = 'rgba(150,110,70,0.18)';
+    ctx.strokeStyle = 'rgba(38,24,12,0.3)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(x + offset + 0.5, y);
+    ctx.moveTo(x + offset + 0.5, y + 1.5);
     ctx.lineTo(x + offset + 0.5, y + ts);
     ctx.stroke();
+
+    // Veinage : deux traits clairs dans le sens de la lame.
+    ctx.strokeStyle = 'rgba(255,225,190,0.09)';
+    ctx.lineWidth = 1;
+    [0.38, 0.7].forEach((f) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y + ts * f);
+      ctx.lineTo(x + ts, y + ts * f);
+      ctx.stroke();
+    });
 
     if (tile === TILE.DOOR) {
       // Seuil clair : on voit où l'on passe d'une pièce à l'autre.
@@ -490,7 +515,12 @@ class World {
    * pièce, ce qui donne du relief au lieu d'un quadrillage uniforme.
    */
   _drawWall(ctx, x, y, ts) {
-    ctx.fillStyle = '#575048';
+    /*
+     * Mur clair, volontairement contrasté avec les sols.
+     * Il était auparavant brun-gris sombre, ce qui se confondait avec le
+     * parquet une fois celui-ci assombri : on ne lisait plus le plan.
+     */
+    ctx.fillStyle = '#cfc6b4';
     ctx.fillRect(x, y, ts, ts);
 
     const c = Math.round(x / ts);
@@ -501,10 +531,14 @@ class World {
       return t === TILE.WALL || t === TILE.OUTSIDE;
     };
 
-    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    /*
+     * Plinthe sombre sur les faces exposées à une pièce. Sur un mur clair, un
+     * liseré blanc ne se verrait pas : c'est donc une ombre qui donne le
+     * relief, et elle marque nettement la limite avec le sol.
+     */
+    ctx.fillStyle = 'rgba(90,78,60,0.4)';
     if (!isWall(c, r - 1)) ctx.fillRect(x, y, ts, 2.5);
     if (!isWall(c - 1, r)) ctx.fillRect(x, y, 2.5, ts);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
     if (!isWall(c, r + 1)) ctx.fillRect(x, y + ts - 2.5, ts, 2.5);
     if (!isWall(c + 1, r)) ctx.fillRect(x + ts - 2.5, y, 2.5, ts);
   }
@@ -514,7 +548,8 @@ class World {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `600 ${Math.max(9, ts * 0.36)}px sans-serif`;
-    ctx.fillStyle = 'rgba(70,58,45,0.42)';
+    // Texte clair : les sols sont sombres, une étiquette brune s'y noyait.
+    ctx.fillStyle = 'rgba(255,246,230,0.5)';
 
     (CONFIG.rooms || []).forEach((room) => {
       if (!room.label) return;
