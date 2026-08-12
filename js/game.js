@@ -20,6 +20,11 @@ const Game = {
   stepIndex: 0,
   carrying: null,
   revealed: false,
+  /**
+   * Horodatage de l'entrée dans la chambre, pour le déclenchement différé.
+   * `null` tant qu'on n'y est pas entré.
+   */
+  _nurserySince: null,
   camera: { x: 0, y: 0, w: 0, h: 0 },
   _raf: 0,
 
@@ -74,6 +79,7 @@ const Game = {
     this.stepIndex = 0;
     this.carrying = null;
     this.revealed = false;
+    this._nurserySince = null;
 
     // Le couloir de départ compte comme déjà découvert.
     this.players.forEach((p) => this.world.discoverAt(p.x, p.y));
@@ -339,11 +345,16 @@ const Game = {
       case 'bring-tsuki':
         for (const p of this.players) {
           if (this.world.isInTsukiRoom(p.x, p.y)) {
-            // Tsuki s'installe et lâche la clé.
             this.world.cat.carried = false;
             this.world.cat.atHome = true;
-            this.world.cat.x = p.x;
-            this.world.cat.y = p.y;
+
+            // Il s'installe sur son fauteuil, ou là où on le pose s'il n'y
+            // en a pas dans la pièce.
+            if (!this.world.putCatOnChair()) {
+              this.world.cat.x = p.x;
+              this.world.cat.y = p.y;
+            }
+
             this.carrying = null;
             this.world.dropSecondKey();
             this._completeStep();
@@ -419,23 +430,54 @@ const Game = {
   },
 
   /**
-   * L'annonce, déclenchée en approchant du landau et non à la porte.
-   * C'est le vrai point d'orgue : les joueurs entrent, traversent la pièce,
-   * découvrent le landau, et le message tombe à ce moment-là.
+   * L'annonce, une fois dans la chambre. Deux déclencheurs :
+   *
+   *   1. s'approcher du landau : immédiat, c'est le geste attendu ;
+   *   2. un délai après l'entrée dans la pièce (`reveal.autoDelay`) : filet
+   *      de sécurité, pour que le message tombe même si l'on ne trouve pas
+   *      le landau ou qu'on hésite près de la porte.
+   *
+   * Le chronomètre démarre à l'entrée, et s'arrête si l'on ressort.
    */
   _checkNurseryEntry() {
     const step = this.step;
     if (!step || step.id !== 'reach-pram') return;
     if (this.revealed) return;
 
-    if (this.players.some((p) => this.world.isNearPram(p.x, p.y))) {
-      this.revealed = true;
-      this.stepIndex += 1;
-      UI.setObjective('', this.steps.length, this.steps.length);
-      UI.setHint('');
-      UI.setCarrying(null);
-      UI.showFinal();
+    const inside = this.players.some((p) => this.world.isInNursery(p.x, p.y));
+    if (!inside) {
+      this._nurserySince = null; // ressorti : le chrono repart de zéro
+      return;
     }
+
+    // 1. Proximité du landau
+    if (this.players.some((p) => this.world.isNearPram(p.x, p.y))) {
+      this._reveal();
+      return;
+    }
+
+    // 2. Délai depuis l'entrée
+    const delay = CONFIG.reveal.autoDelay;
+    if (!delay) return;
+
+    // `null` et non 0 comme valeur « pas encore entré » : un horodatage peut
+    // légitimement valoir 0 au tout début, ce qui décalerait le départ.
+    const now = performance.now();
+    if (this._nurserySince === null) {
+      this._nurserySince = now;
+      return;
+    }
+    if (now - this._nurserySince >= delay) this._reveal();
+  },
+
+  /** Bascule sur l'annonce finale. */
+  _reveal() {
+    this.revealed = true;
+    this.stepIndex += 1;
+    UI.setObjective('', this.steps.length, this.steps.length);
+    UI.setHint('');
+    UI.setCarrying(null);
+    UI.showFinal();
   },
 
   _draw(time) {

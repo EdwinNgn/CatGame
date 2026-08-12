@@ -63,7 +63,10 @@ const CONFIG = {
    *   S canapé   T table    B lit       K plan de travail   F frigo
    *   W baignoire  H douche  N vasque   C toilettes  M machine à laver
    *   X armoire  D bureau   P plante    V meuble TV
-   *   L meuble bas   O carton
+   *   L meuble bas   O carton   A fauteuil
+   *
+   *   Le fauteuil « A » de la chambre de Tsuki est son couchage : c'est là
+   *   qu'il s'endort, et la clé tombe juste devant.
    *
    * Les meubles s'orientent tout seuls : le dossier d'un canapé, la tête
    * d'un lit ou la robinetterie d'une vasque se placent contre le mur voisin.
@@ -88,8 +91,8 @@ const CONFIG = {
     '#DDDDDD.......#..#######............#',
     '#.............+..+....X#...TTTTT....#',
     '#.............+..+....X#...TTTTT....#',
-    '#.............#..#....X#............#',
-    '#.............#..#MM...#............#',
+    '#AA...........#..#....X#............#',
+    '#AA...........#..#MM...#............#',
     '#.............#..#MMKKK#............#',
     '#.....TT......#..#######............#',
     '###############..#NNNNN#P...........#',
@@ -153,7 +156,7 @@ const CONFIG = {
     movedCard: {
       icon: ICONS.paw,
       title: 'Plus personne en cuisine',
-      text: 'Tsuki a filé' +
+      text: 'Tsuki a filé! ' +
             'Il ne doit pas être bien loin.'
     }
   },
@@ -259,12 +262,21 @@ const CONFIG = {
    */
   reveal: {
     title: 'On va être trois ' + ICONS.heart,
-    text: 'Ce n\'est plus une pièce vide. C\'est sa chambre, et il arrive.',
+    text: 'Ce n\'est plus une chambre d\'amis. C\'est sa chambre, et il arrive.',
     /** Mets '' pour masquer complètement cette ligne. */
     date: 'Prévu pour mars 2027',
     /** Deux boutons : fermer et rester sur place, ou relancer une partie. */
     okButton: 'OK',
-    replayButton: 'Rejouer'
+    replayButton: 'Rejouer',
+
+    /**
+     * Filet de sécurité : délai, en millisecondes, après l'entrée dans la
+     * chambre. Passé ce temps l'annonce s'affiche même si l'on n'est pas allé
+     * jusqu'au landau — on ne peut donc pas rester bloqué sans comprendre.
+     * S'approcher du landau la déclenche immédiatement, sans attendre.
+     * Mets 0 pour n'avoir que le déclenchement par proximité.
+     */
+    autoDelay: 3000
   },
 
   /** Textes d'ambiance génériques. */

@@ -121,17 +121,81 @@ class World {
     return this.roomAt((target.col + 0.5) * ts, (target.row + 0.5) * ts);
   }
 
-  /** Tsuki laisse tomber la deuxième clé à côté de lui. */
+  /**
+   * Le fauteuil de la chambre de Tsuki : son couchage.
+   * @returns {{x:number, y:number, front:{x:number, y:number}}|null}
+   *   le centre du fauteuil, et le point juste devant (côté pièce).
+   */
+  get catChair() {
+    const room = this.tsukiRoom;
+    if (!room) return null;
+
+    const chair = this.pieces.find((p) => {
+      if (p.kind !== 'armchair') return false;
+      // Le fauteuil doit être dans la chambre de Tsuki.
+      const cx = (p.col + p.w / 2) * this.tileSize;
+      const cy = (p.row + p.h / 2) * this.tileSize;
+      return this.roomAt(cx, cy) === room;
+    });
+    if (!chair) return null;
+
+    const ts = this.tileSize;
+    const x = (chair.col + chair.w / 2) * ts;
+    const y = (chair.row + chair.h / 2) * ts;
+
+    // « Devant » suit l'orientation du meuble, donc l'endroit où l'on peut
+    // réellement marcher : la clé n'atterrit jamais dans un mur.
+    const step = Math.max(ts * 0.8, (Math.max(chair.w, chair.h) * ts) / 2 + ts * 0.55);
+    const offsets = {
+      down: { x: 0, y: step },
+      up: { x: 0, y: -step },
+      left: { x: -step, y: 0 },
+      right: { x: step, y: 0 }
+    };
+    const o = offsets[chair.facing] || offsets.down;
+
+    return { x, y, front: { x: x + o.x, y: y + o.y }, facing: chair.facing };
+  }
+
+  /**
+   * Tsuki laisse tomber la deuxième clé.
+   *
+   * Elle tombe devant le fauteuil s'il y en a un dans la chambre, sinon à
+   * côté du chat. Un repli vérifie que la case est bien praticable : une clé
+   * posée dans un meuble serait impossible à ramasser.
+   */
   dropSecondKey() {
     if (this.things.key2) return;
+
+    const chair = this.catChair;
+    let x = this.cat.x + this.tileSize * 0.9;
+    let y = this.cat.y + this.tileSize * 0.35;
+
+    if (chair && this.isWalkable(chair.front.x, chair.front.y)) {
+      x = chair.front.x;
+      y = chair.front.y;
+    } else if (!this.isWalkable(x, y)) {
+      // Ni fauteuil accessible ni case libre : on la met sous le chat.
+      x = this.cat.x;
+      y = this.cat.y;
+    }
+
     this.things.key2 = {
       id: 'key2',
       icon: ICONS.key,
-      x: this.cat.x + this.tileSize * 0.9,
-      y: this.cat.y + this.tileSize * 0.35,
+      x, y,
       active: true,
       taken: false
     };
+  }
+
+  /** Installe Tsuki endormi sur son fauteuil. */
+  putCatOnChair() {
+    const chair = this.catChair;
+    if (!chair) return false;
+    this.cat.x = chair.x;
+    this.cat.y = chair.y;
+    return true;
   }
 
   /** La pièce protégée par la porte « R ». */
@@ -722,6 +786,45 @@ class World {
     });
   }
 
+  /**
+   * Fauteuil : dossier contre le mur, accoudoirs, et un coussin creusé.
+   * Plus profond et plus rond qu'un canapé, dont il partage la logique.
+   */
+  _piece_armchair(ctx, rect, facing) {
+    const frame = '#7a6455';
+    const body = '#96806d';
+    const cushion = '#b09a84';
+
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      this._fillRound(ctx, 0, 0, w, h, Math.min(w, h) * 0.22, body);
+
+      const backH = Math.min(h * 0.36, 16);
+      const armW = Math.min(w * 0.22, 14);
+
+      // Dossier et accoudoirs
+      this._fillRound(ctx, 0, 0, w, backH, Math.min(w, h) * 0.2, frame);
+      this._fillRound(ctx, 0, 0, armW, h, Math.min(w, h) * 0.2, frame);
+      this._fillRound(ctx, w - armW, 0, armW, h, Math.min(w, h) * 0.2, frame);
+
+      // Assise creusée
+      const ix = armW + 2;
+      const iw = w - armW * 2 - 4;
+      const iy = backH + 2;
+      const ih = h - backH - 5;
+      if (iw > 4 && ih > 4) {
+        this._fillRound(ctx, ix, iy, iw, ih, Math.min(iw, ih) * 0.28, cushion);
+        ctx.strokeStyle = 'rgba(90,70,55,0.3)';
+        ctx.lineWidth = 1.2;
+        this._roundRect(ctx, ix + 2, iy + 2, iw - 4, ih - 4, Math.min(iw, ih) * 0.24);
+        ctx.stroke();
+      }
+
+      // Liseré clair sur le haut du dossier
+      ctx.fillStyle = 'rgba(255,255,255,0.13)';
+      ctx.fillRect(2, 2, w - 4, 2.5);
+    });
+  }
+
   /** Lit : tête de lit contre le mur, oreillers puis couette vers la pièce. */
   _piece_bed(ctx, rect, facing) {
     this._oriented(ctx, rect, facing, ({ w, h }) => {
@@ -1162,6 +1265,14 @@ class World {
       ctx.arc(sx, sy + bob, 26, 0, Math.PI * 2);
       ctx.fill();
 
+      /*
+       * Retour à une couleur opaque avant d'écrire l'emoji : sans ça, le
+       * dégradé du halo restait le `fillStyle` courant, et comme son bord
+       * est transparent, l'emoji était peint en dégradé et paraissait
+       * délavé — d'autant plus visible sur mobile, où la case est réduite.
+       */
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 1;
       ctx.font = emojiFont(this.tileSize * 0.8);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

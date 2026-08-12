@@ -71,10 +71,14 @@ class Player {
     if (carrying && icons[carrying]) {
       const ix = sx + this.radius * 0.95;
       const iy = sy - this.radius * 0.75 - bounce;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
       ctx.beginPath();
       ctx.arc(ix, iy, this.radius * 0.62, 0, Math.PI * 2);
       ctx.fill();
+
+      // Couleur opaque avant l'emoji : sinon il héritait du blanc
+      // semi-transparent du médaillon et paraissait délavé.
+      ctx.fillStyle = '#ffffff';
       ctx.font = emojiFont(this.radius * 0.95);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

@@ -27,9 +27,11 @@ python3 -m http.server 8000
 6. **Ramasser cette clé.**
 7. **Ouvrir la dernière porte.** Elle s'ouvre sans un mot : on entre
    librement.
-8. **Entrer dans la chambre.** L'annonce ne tombe qu'en avançant vers le
-   milieu de la pièce, où se trouve le landau — mais aucun texte du jeu ne le
-   nomme avant, pour ne pas vendre la surprise. Deux boutons : « OK » referme
+8. **Entrer dans la chambre.** L'annonce se déclenche de deux façons : en
+   s'approchant du landau, au milieu de la pièce, ou automatiquement au bout
+   de trois secondes passées dans la chambre (`reveal.autoDelay`) — ce filet
+   évite de rester bloqué sans comprendre. Aucun texte du jeu ne nomme le
+   landau avant, pour ne pas vendre la surprise. Deux boutons : « OK » referme
    le message et laisse continuer la visite, « Rejouer » relance une partie.
 
 Le HUD affiche en permanence l'étape courante, l'objectif, et ce que vous avez
@@ -85,6 +87,11 @@ Meubles, infranchissables :
 | `X` | armoire | `V` | meuble TV |
 | `D` | bureau | `L` | meuble bas |
 | `P` | plante | `O` | carton |
+| `A` | fauteuil | | |
+
+Le fauteuil `A` placé dans la chambre de Tsuki (`tsukiRoom: true`) devient son
+couchage : il s'y endort et la clé tombe juste devant, du côté ouvert du
+fauteuil. Sans fauteuil dans la pièce, il s'installe là où on le dépose.
 
 Les meubles contigus de même lettre sont regroupés en un seul objet : un `S`
 sur 2x7 cases devient un vrai canapé, pas quatorze petits carrés.
@@ -127,7 +134,7 @@ console si la partie est insoluble :
 |---|---|
 | `quest.steps` | Les 8 étapes : objectif affiché, indice, message de porte fermée, et la carte qui s'ouvre à la réussite. Ne change pas les `id`. |
 | `cat` | Le nom et les couleurs du chat. |
-| `reveal` | L'annonce affichée près du landau : titre, texte, date (`date: ''` pour masquer) et le libellé des deux boutons (`okButton`, `replayButton`). |
+| `reveal` | L'annonce : titre, texte, date (`date: ''` pour masquer), libellé des deux boutons (`okButton`, `replayButton`) et `autoDelay`, le délai en millisecondes avant déclenchement automatique dans la chambre (`0` pour n'avoir que la proximité). |
 | `world.tileSize` | Taille d'une case en pixels dans le plan. |
 | `world.minTileSize` | Taille minimale d'une case à l'écran. En dessous, le jeu zoome et la caméra suit le joueur au lieu de tout afficher. Augmente pour un zoom plus serré. |
 | `world.fog` | `true` : les pièces restent masquées jusqu'à ce qu'on y entre. |
