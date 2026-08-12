@@ -83,28 +83,28 @@ const CONFIG = {
     '#...BBBBBBB..X#~~~~~~################',
     '#...BBBBBBB..X#~~~~~~#KKKKKKKKKKK:::#',
     '#...BBBBBBB...########KKKKKKKKKKK:::#',
-    '#.............#AA....+::::::t:::::TT#',
-    '#.............r......+::::::::::::TT#',
-    '#AA...........r......#FFLLLUU:::::::#',
+    '#.............#AA....:::::::t:::::TT#',
+    '#.............r......:::::::::::::TT#',
+    '#AA...........#......#FFLLLUU:::::::#',
     '#AA...GGG.....#......#LLLLLUU:::::::#',
     '###############.12...########.......#',
-    '#DDDDDD...AAAA#......+..............#',
-    '#DDDDDD...AAAA#..GG..+..............#',
+    '#DDDDDD...AAAA#.....................#',
+    '#DDDDDD...AAAA#...GG................#',
     '#DDDDDD.......#..#######............#',
-    '#.............+..+....X#...TTTTT....#',
-    '#.............+..+....X#...TTTTT....#',
+    '#.............+.......X#...TTTTT....#',
+    '#.............#.......X#...TTTTT....#',
     '#.............#..#....X#............#',
     '#.............#..#MMUUU#............#',
     '#JJ...GGG.....#..#MMUUU#............#',
     '#JJ...GGG.....#..#######............#',
     '###############..#######P...........#',
-    '#.............R..+:::::#V.........SS#',
-    '#.............R..+:::::#V.........SS#',
-    '#.............#+##:::NN#V.....k...SS#',
-    '#.............#::#:::NN#V.........SS#',
-    '#.............#::#:::NN#V.........SS#',
-    '#.............#::#HHHHH#V.........SS#',
-    '#.............#C:#HHHHH#V..LLL....SS#',
+    '#.............R..+:::::#VV........SS#',
+    '#.............#..#:::::#VV........SS#',
+    '#.............#+##:::NN#VV....k...SS#',
+    '#.............#::#:::NN#VV........SS#',
+    '#.............#::#:::NN#VV........SS#',
+    '#.............#::#HHHHH#VV.LLLL...SS#',
+    '#.............#C:#HHHHH#...LLLL...SS#',
     '#####################################'
   ],
 
@@ -278,10 +278,10 @@ const CONFIG = {
     replayButton: 'Rejouer',
 
     /**
-     * Filet de sécurité : délai, en millisecondes, après l'entrée dans la
-     * chambre. Passé ce temps l'annonce s'affiche même si l'on n'est pas allé
-     * jusqu'au landau — on ne peut donc pas rester bloqué sans comprendre.
-     * S'approcher du landau la déclenche immédiatement, sans attendre.
+     * Filet de sécurité : délai, en millisecondes, décompté à partir de
+     * l'OUVERTURE de la dernière porte. Passé ce temps l'annonce s'affiche,
+     * même si les joueurs hésitent sur le seuil ou n'entrent pas.
+     * S'approcher du bébé la déclenche immédiatement, sans attendre.
      * Mets 0 pour n'avoir que le déclenchement par proximité.
      */
     autoDelay: 3000

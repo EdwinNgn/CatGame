@@ -480,33 +480,106 @@ class World {
     });
 
     if (tile === TILE.DOOR) {
-      // Seuil clair : on voit où l'on passe d'une pièce à l'autre.
-      ctx.fillStyle = 'rgba(255,244,222,0.5)';
-      ctx.fillRect(x, y, ts, ts);
+      this._drawDoorway(ctx, x, y, ts, c, r, false);
     }
 
     if (tile === TILE.LOCKED_BEDROOM || tile === TILE.LOCKED_NURSERY) {
       const open = (tile === TILE.LOCKED_BEDROOM)
         ? this.locks.bedroom
         : this.locks.nursery;
+      this._drawDoorway(ctx, x, y, ts, c, r, !open);
+    }
+  }
 
-      if (open) {
-        // Porte ouverte : simple seuil, un peu plus chaud que les autres.
-        ctx.fillStyle = 'rgba(255,236,206,0.6)';
-        ctx.fillRect(x, y, ts, ts);
-      } else {
-        // Panneau de porte fermé, avec cadre, poignée et serrure.
-        ctx.fillStyle = '#7d4a34';
-        ctx.fillRect(x, y, ts, ts);
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 3, y + 3, ts - 6, ts - 6);
-        ctx.fillStyle = '#e8c463';
-        ctx.beginPath();
-        ctx.arc(x + ts * 0.72, y + ts * 0.5, Math.max(2, ts * 0.07), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillRect(x + ts * 0.66, y + ts * 0.62, Math.max(2, ts * 0.1), Math.max(3, ts * 0.13));
-      }
+  /**
+   * Ouverture entre deux pièces, vue de dessus.
+   *
+   * Une porte se lit à trois choses : les deux montants du chambranle de part
+   * et d'autre du passage, le seuil, et pour une porte fermée le battant qui
+   * barre l'ouverture avec sa poignée. La version précédente remplissait
+   * simplement la case d'un carré brun, ce qui ne ressemblait à rien.
+   *
+   * L'orientation vient des murs voisins : on regarde de quel côté sont les
+   * murs pour savoir si le passage est horizontal ou vertical.
+   *
+   * @param {boolean} closed dessine le battant fermé
+   */
+  _drawDoorway(ctx, x, y, ts, c, r, closed) {
+    const isWall = (cc, rr) => {
+      if (!this.tiles[rr] || this.tiles[rr][cc] === undefined) return true;
+      const t = this.tiles[rr][cc];
+      return t === TILE.WALL || t === TILE.OUTSIDE;
+    };
+
+    /*
+     * Sens du passage : on traverse la porte perpendiculairement au mur qui
+     * la contient. Une porte percée dans un mur VERTICAL (murs au-dessus et
+     * en-dessous d'elle) se franchit horizontalement, donc son battant est
+     * vertical. C'est le cas de la quasi-totalité des portes du plan.
+     *
+     * Comme les cases voisines dans le sens du passage ne sont pas toujours
+     * des murs (une porte au coin d'une pièce, par exemple), on compare les
+     * deux axes plutôt que d'exiger deux murs stricts.
+     */
+    const wallsVert = (isWall(c, r - 1) ? 1 : 0) + (isWall(c, r + 1) ? 1 : 0);
+    const wallsHorz = (isWall(c - 1, r) ? 1 : 0) + (isWall(c + 1, r) ? 1 : 0);
+
+    // Battant horizontal seulement si le mur porteur est horizontal.
+    const horizontal = wallsHorz > wallsVert;
+
+    const frame = '#b9ad97';   // chambranle, ton du mur en plus soutenu
+    const sill = 'rgba(255,240,214,0.42)';
+    const panel = '#7d4a34';
+    const panelEdge = 'rgba(255,255,255,0.16)';
+
+    // Seuil : bande claire dans le sens du passage
+    ctx.fillStyle = sill;
+    ctx.fillRect(x, y, ts, ts);
+
+    // Montants du chambranle, contre les murs
+    const jamb = Math.max(2.5, ts * 0.11);
+    ctx.fillStyle = frame;
+    if (horizontal) {
+      ctx.fillRect(x, y, ts, jamb);
+      ctx.fillRect(x, y + ts - jamb, ts, jamb);
+    } else {
+      ctx.fillRect(x, y, jamb, ts);
+      ctx.fillRect(x + ts - jamb, y, jamb, ts);
+    }
+
+    if (!closed) {
+      // Porte ouverte : le battant est rabattu contre le mur, sur le côté.
+      ctx.fillStyle = panel;
+      const leaf = Math.max(2.5, ts * 0.13);
+      if (horizontal) ctx.fillRect(x, y + jamb, leaf, ts - jamb * 2);
+      else ctx.fillRect(x + jamb, y, ts - jamb * 2, leaf);
+      return;
+    }
+
+    // Porte fermée : le battant barre toute l'ouverture.
+    const inset = jamb + 1;
+    if (horizontal) {
+      ctx.fillStyle = panel;
+      ctx.fillRect(x, y + inset, ts, ts - inset * 2);
+      // Rainure du panneau
+      ctx.strokeStyle = panelEdge;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(x + ts * 0.14, y + inset + 2.5, ts * 0.72, ts - inset * 2 - 5);
+      // Poignée, côté ouverture
+      ctx.fillStyle = '#e8c463';
+      ctx.beginPath();
+      ctx.arc(x + ts * 0.78, y + ts * 0.5, Math.max(1.8, ts * 0.065), 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = panel;
+      ctx.fillRect(x + inset, y, ts - inset * 2, ts);
+      ctx.strokeStyle = panelEdge;
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(x + inset + 2.5, y + ts * 0.14, ts - inset * 2 - 5, ts * 0.72);
+      ctx.fillStyle = '#e8c463';
+      ctx.beginPath();
+      ctx.arc(x + ts * 0.5, y + ts * 0.78, Math.max(1.8, ts * 0.065), 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 

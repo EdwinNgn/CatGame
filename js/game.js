@@ -402,11 +402,14 @@ const Game = {
       }
 
       // Ouverture de la dernière porte : pas de message ici, les joueurs
-      // entrent librement. L'annonce attend le landau.
+      // entrent librement. L'annonce attend le landau, ou le délai.
       if (step && step.id === 'open-nursery' &&
           this.world.isAtDoor(p.x, p.y, 'nursery') && this.carrying === 'key2') {
         this.carrying = null;
         this.world.unlock('nursery');
+        // Le compte à rebours part dès l'ouverture, et non à l'entrée dans
+        // la pièce : on ne peut donc pas rester bloqué sur le seuil.
+        this._nurserySince = performance.now();
         this._completeStep();
         return;
       }
@@ -430,44 +433,32 @@ const Game = {
   },
 
   /**
-   * L'annonce, une fois dans la chambre. Deux déclencheurs :
+   * L'annonce, une fois la dernière porte ouverte. Deux déclencheurs :
    *
-   *   1. s'approcher du landau : immédiat, c'est le geste attendu ;
-   *   2. un délai après l'entrée dans la pièce (`reveal.autoDelay`) : filet
-   *      de sécurité, pour que le message tombe même si l'on ne trouve pas
-   *      le landau ou qu'on hésite près de la porte.
+   *   1. s'approcher du bébé, au centre de la pièce : immédiat ;
+   *   2. un délai décompté depuis l'OUVERTURE DE LA PORTE
+   *      (`reveal.autoDelay`) : filet de sécurité, qui tombe même si les
+   *      joueurs hésitent sur le seuil ou n'entrent pas.
    *
-   * Le chronomètre démarre à l'entrée, et s'arrête si l'on ressort.
+   * Le chronomètre n'est pas remis à zéro si l'on ressort : une fois la porte
+   * ouverte, l'annonce finira toujours par arriver.
    */
   _checkNurseryEntry() {
     const step = this.step;
     if (!step || step.id !== 'reach-pram') return;
     if (this.revealed) return;
 
-    const inside = this.players.some((p) => this.world.isInNursery(p.x, p.y));
-    if (!inside) {
-      this._nurserySince = null; // ressorti : le chrono repart de zéro
-      return;
-    }
-
-    // 1. Proximité du landau
+    // 1. Proximité du bébé
     if (this.players.some((p) => this.world.isNearPram(p.x, p.y))) {
       this._reveal();
       return;
     }
 
-    // 2. Délai depuis l'entrée
+    // 2. Délai depuis l'ouverture de la porte
     const delay = CONFIG.reveal.autoDelay;
-    if (!delay) return;
+    if (!delay || this._nurserySince === null) return;
 
-    // `null` et non 0 comme valeur « pas encore entré » : un horodatage peut
-    // légitimement valoir 0 au tout début, ce qui décalerait le départ.
-    const now = performance.now();
-    if (this._nurserySince === null) {
-      this._nurserySince = now;
-      return;
-    }
-    if (now - this._nurserySince >= delay) this._reveal();
+    if (performance.now() - this._nurserySince >= delay) this._reveal();
   },
 
   /** Bascule sur l'annonce finale. */
