@@ -1262,8 +1262,12 @@ class World {
       const mirrorH = Math.min(h * 0.22, 6);
       this._fillRound(ctx, w * 0.1, 1.5, w * 0.8, mirrorH, 2, '#a8c4d2');
 
-      // Une cuve par tranche d'environ 30 px de longueur
-      const n = Math.max(1, Math.round(w / 34));
+      /*
+       * Deux vasques au maximum : le nombre était auparavant proportionnel à
+       * la longueur du meuble, ce qui en alignait quatre ou cinq sur un plan
+       * un peu large. Un meuble court n'en reçoit qu'une.
+       */
+      const n = w < 52 ? 1 : 2;
       for (let i = 0; i < n; i++) {
         const cw = w / n;
         const cx = cw * (i + 0.5);
@@ -1477,6 +1481,159 @@ class World {
       ctx.beginPath();
       ctx.arc(w * 0.78, h * 0.38, Math.min(w, h) * 0.09, 0, Math.PI * 2);
       ctx.fill();
+    });
+  }
+
+  /**
+   * Buffet : caisson bas en bois foncé, deux portes à battants avec poignées
+   * centrales, et un plateau supérieur légèrement débordant.
+   */
+  _piece_sideboard(ctx, rect, facing) {
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      const body = '#7d5f42';
+      const door = '#8e6d4c';
+
+      this._fillRound(ctx, 0, 0, w, h, 3, body);
+
+      // Plateau : bandeau clair sur le bord côté pièce
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.fillRect(2, 2, w - 4, Math.min(5, h * 0.16));
+
+      // Portes : deux par tranche d'environ 40 px
+      const n = Math.max(2, Math.round(w / 42));
+      const pad = 3;
+      const dw = (w - pad * (n + 1)) / n;
+      const dy = Math.min(7, h * 0.24);
+      const dh = h - dy - pad;
+
+      for (let i = 0; i < n; i++) {
+        const dx = pad + i * (dw + pad);
+        this._fillRound(ctx, dx, dy, dw, dh, 2, door);
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1.2;
+        this._roundRect(ctx, dx, dy, dw, dh, 2);
+        ctx.stroke();
+
+        // Poignée verticale, vers le milieu du meuble
+        ctx.fillStyle = '#e0c07a';
+        const hw = Math.max(2, dw * 0.09);
+        const hx = (i < n / 2) ? dx + dw - hw * 2.2 : dx + hw * 1.2;
+        ctx.fillRect(hx, dy + dh * 0.4, hw, Math.max(3, dh * 0.24));
+      }
+    });
+  }
+
+  /**
+   * Commode : caisson avec des tiroirs pleine largeur empilés, chacun muni
+   * d'une poignée horizontale. Se distingue du buffet par ce sens de découpe.
+   */
+  _piece_dresser(ctx, rect, facing) {
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      const body = '#9b7b5b';
+      const drawer = '#ab8b69';
+
+      this._fillRound(ctx, 0, 0, w, h, 3, body);
+
+      // Tiroirs empilés dans la profondeur du meuble
+      const n = Math.max(2, Math.min(4, Math.round(h / 16)));
+      const pad = 2.5;
+      const dh = (h - pad * (n + 1)) / n;
+
+      for (let i = 0; i < n; i++) {
+        const dy = pad + i * (dh + pad);
+        this._fillRound(ctx, pad, dy, w - pad * 2, dh, 2, drawer);
+        ctx.strokeStyle = 'rgba(0,0,0,0.26)';
+        ctx.lineWidth = 1.2;
+        this._roundRect(ctx, pad, dy, w - pad * 2, dh, 2);
+        ctx.stroke();
+
+        // Poignée horizontale, centrée
+        ctx.fillStyle = '#e0c07a';
+        const hw = Math.max(6, w * 0.3);
+        ctx.fillRect((w - hw) / 2, dy + dh * 0.42, hw, Math.max(2, dh * 0.18));
+      }
+    });
+  }
+
+  /**
+   * Arbre à chat : plateformes rondes de tailles différentes reliées par un
+   * poteau, plus un panier au sommet. Vu de dessus on voit surtout les
+   * plateaux qui se chevauchent, et le tronc entre eux.
+   */
+  _piece_cattree(ctx, rect, facing) {
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      const post = '#b09a84';
+      const carpet = '#8d9f8a';
+      const carpetDark = '#76886f';
+
+      // Socle
+      this._fillRound(ctx, 0, h * 0.62, w, h * 0.38, Math.min(w, h) * 0.14, carpetDark);
+
+      // Poteau, du socle vers la plateforme haute
+      ctx.strokeStyle = post;
+      ctx.lineWidth = Math.max(3, Math.min(w, h) * 0.18);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, h * 0.72);
+      ctx.lineTo(w * 0.5, h * 0.34);
+      ctx.stroke();
+
+      // Corde enroulée : quelques traits sur le poteau
+      ctx.strokeStyle = 'rgba(120,100,80,0.45)';
+      ctx.lineWidth = Math.max(1, Math.min(w, h) * 0.035);
+      for (let i = 0; i < 4; i++) {
+        const py = h * (0.4 + i * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.42, py);
+        ctx.lineTo(w * 0.58, py);
+        ctx.stroke();
+      }
+
+      // Plateforme intermédiaire, décalée
+      ctx.fillStyle = carpet;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.28, h * 0.52, w * 0.24, h * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Panier au sommet, vu de dessus : anneau plus creux
+      ctx.fillStyle = carpet;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.5, h * 0.26, w * 0.36, h * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = carpetDark;
+      ctx.lineWidth = Math.max(1.5, Math.min(w, h) * 0.06);
+      ctx.stroke();
+
+      // Coussin dans le panier
+      ctx.fillStyle = '#e4d6c3';
+      ctx.beginPath();
+      ctx.ellipse(w * 0.5, h * 0.26, w * 0.22, h * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  /**
+   * Plan de travail nu : le plateau et son chant, sans évier ni plaques.
+   * Utile pour prolonger une cuisine sans répéter les équipements.
+   */
+  _piece_worktop(ctx, rect, facing) {
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      this._fillRound(ctx, 0, 0, w, h, 3, '#cfc9bd');
+
+      // Chant plus sombre du côté de la pièce
+      ctx.fillStyle = '#b3aca2';
+      ctx.fillRect(0, h - Math.min(5, h * 0.22), w, Math.min(5, h * 0.22));
+
+      // Léger veinage, pour ne pas laisser un aplat gris
+      ctx.strokeStyle = 'rgba(150,142,130,0.35)';
+      ctx.lineWidth = 1;
+      const step = Math.max(10, w / 6);
+      for (let gx = step; gx < w - 2; gx += step) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 2);
+        ctx.lineTo(gx, h - Math.min(5, h * 0.22));
+        ctx.stroke();
+      }
     });
   }
 

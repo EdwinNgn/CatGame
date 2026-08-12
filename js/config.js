@@ -60,10 +60,12 @@ const CONFIG = {
    *   quand on le dépose dans sa chambre.
    *
    *   Meubles (infranchissables) :
-   *   S canapé   T table    B lit       K plan de travail   F frigo
-   *   W baignoire  H douche  N vasque   C toilettes  M machine à laver
+   *   S canapé   T table    B lit       K plan de travail équipé (évier + plaques)
+   *   U plan de travail nu (sans rien dessus)   F frigo
+   *   W baignoire  H douche  N vasque (2 max)   C toilettes  M machine à laver
    *   X armoire  D bureau   P plante    V meuble TV
    *   L meuble bas   O carton   A fauteuil
+   *   E buffet   G commode   J arbre à chat
    *
    *   Le fauteuil « A » de la chambre de Tsuki est son couchage : c'est là
    *   qu'il s'endort, et la clé tombe juste devant.
@@ -95,14 +97,14 @@ const CONFIG = {
     '#AA...........#..#MM...#............#',
     '#.............#..#MMKKK#............#',
     '#.....TT......#..#######............#',
-    '###############..#NNNNN#P...........#',
+    '###############..#######P...........#',
     '#.............R..+:::::#V.........SS#',
     '#.............R..+:::::#V.........SS#',
-    '#.............#+##:::WW#V.....k...SS#',
-    '#.............#::#:::WW#V.........SS#',
-    '#.............#::#:::WW#V.........SS#',
-    '#.............#::#HH:::#V.........SS#',
-    '#.............#C:#HHNNN#V..LLL....SS#',
+    '#.............#+##:::NN#V.....k...SS#',
+    '#.............#::#:::NN#V.........SS#',
+    '#.............#::#:::NN#V.........SS#',
+    '#.............#::#HHHHH#V.........SS#',
+    '#.............#C:#HHHHH#V..LLL....SS#',
     '#####################################'
   ],
 

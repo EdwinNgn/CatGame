@@ -81,13 +81,21 @@ Meubles, infranchissables :
 |---|---|---|---|
 | `S` | canapé | `W` | baignoire |
 | `T` | table | `H` | douche |
-| `B` | lit | `N` | vasque |
-| `K` | plan de travail | `C` | toilettes |
-| `F` | frigo | `M` | machine à laver |
-| `X` | armoire | `V` | meuble TV |
-| `D` | bureau | `L` | meuble bas |
-| `P` | plante | `O` | carton |
-| `A` | fauteuil | | |
+| `B` | lit | `N` | vasque (2 maximum) |
+| `K` | plan de travail équipé (évier + plaques) | `C` | toilettes |
+| `U` | plan de travail nu | `M` | machine à laver |
+| `F` | frigo | `V` | meuble TV |
+| `X` | armoire | `L` | meuble bas |
+| `D` | bureau | `O` | carton |
+| `P` | plante | `A` | fauteuil |
+| `E` | buffet | `G` | commode |
+| `J` | arbre à chat | | |
+
+Le buffet `E` a des portes à battants, la commode `G` des tiroirs empilés :
+c'est ce qui les distingue visuellement. Le plan de travail existe en deux
+versions, `K` avec évier et plaques, `U` nu pour prolonger une cuisine sans
+répéter les équipements. La vasque `N` affiche une cuve sur une seule case,
+deux au-delà, jamais plus.
 
 Le fauteuil `A` placé dans la chambre de Tsuki (`tsukiRoom: true`) devient son
 couchage : il s'y endort et la clé tombe juste devant, du côté ouvert du
