@@ -85,8 +85,8 @@ const CONFIG = {
     '#...BBBBBBB...########KKKKKKKKKKK:::#',
     '#.............#AA....+::::::t:::::TT#',
     '#.............r......+::::::::::::TT#',
-    '#.............r......#FFLLLUU:::::::#',
-    '#.....GGG.....#......#LLLLLUU:::::::#',
+    '#AA...........r......#FFLLLUU:::::::#',
+    '#AA...GGG.....#......#LLLLLUU:::::::#',
     '###############.12...########.......#',
     '#DDDDDD...AAAA#......+..............#',
     '#DDDDDD...AAAA#..GG..+..............#',
@@ -95,8 +95,8 @@ const CONFIG = {
     '#.............+..+....X#...TTTTT....#',
     '#.............#..#....X#............#',
     '#.............#..#MMUUU#............#',
-    '#JJ...........#..#MMUUU#............#',
-    '#JJ...TT......#..#######............#',
+    '#JJ...GGG.....#..#MMUUU#............#',
+    '#JJ...GGG.....#..#######............#',
     '###############..#######P...........#',
     '#.............R..+:::::#V.........SS#',
     '#.............R..+:::::#V.........SS#',
@@ -118,24 +118,30 @@ const CONFIG = {
    */
   rooms: [
     {
+      // Étiquette remontée entre le lit et les fauteuils, sur du parquet libre.
       name: 'Notre chambre', locked: 'bedroom',
-      col: 1, row: 1, w: 13, h: 11, label: { col: 7.5, row: 10.6 }
+      col: 1, row: 1, w: 13, h: 11, label: { col: 7.5, row: 9.5 }
     },
     {
-      name: 'Chambre de Tsuki', tsukiRoom: true,
-      col: 1, row: 13, w: 13, h: 9, label: { col: 7.5, row: 21 }
+      // Centrée dans la pièce, entre les bureaux et les arbres à chat.
+      name: 'Chambre de Tsuki / Bureau', tsukiRoom: true,
+      col: 1, row: 13, w: 13, h: 9, label: { col: 7.5, row: 17.5 }
     },
     {
+      // Descendue sous le tapis du bébé, qui masquait le nom au centre.
       name: 'Chambre du bébé', nursery: true, locked: 'nursery',
       hiddenName: 'Une porte fermée',
       revealedName: 'Chambre du bébé',
-      col: 1, row: 23, w: 13, h: 7, label: { col: 7.5, row: 29 }
+      col: 1, row: 23, w: 13, h: 7, label: { col: 7.5, row: 29.5 }
     },
     { name: 'Entrée',        col: 15, row: 8,  w: 6,  h: 7,  label: { col: 18,   row: 10.5 } },
-    { name: 'Cuisine',       col: 22, row: 7,  w: 14, h: 5,  label: { col: 29,   row: 10.6 } },
+    // Centrée sur la bande de carrelage libre, sous les plans de travail.
+    { name: 'Cuisine',       col: 22, row: 7,  w: 14, h: 5,  label: { col: 30,   row: 9.5 } },
     { name: 'Salon',         col: 24, row: 13, w: 12, h: 17, label: { col: 30,   row: 21 } },
-    { name: 'Buanderie',     col: 18, row: 16, w: 5,  h: 6,  label: { col: 20.5, row: 19 } },
-    { name: 'Salle de bain', col: 18, row: 23, w: 5,  h: 7,  label: { col: 20.5, row: 26 } },
+    // Centrée dans la pièce, au-dessus de la machine à laver.
+    { name: 'Buanderie',     col: 18, row: 16, w: 5,  h: 6,  label: { col: 20.5, row: 18.5 } },
+    // Remontée sur le carrelage libre, au-dessus des vasques.
+    { name: 'Salle de bain', col: 18, row: 23, w: 5,  h: 7,  label: { col: 20.5, row: 24.5 } },
     { name: 'WC',            col: 15, row: 26, w: 2,  h: 4,  label: { col: 16,   row: 28 } }
   ],
 

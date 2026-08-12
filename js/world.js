@@ -617,12 +617,12 @@ class World {
       ts * 1.5
     );
 
-    // Landau vide, décalé sur la droite : c'est le bébé au centre qui porte
-    // le message, le landau n'est plus qu'un élément de décor.
+    // Landau vide, dans le coin inférieur droit : c'est le bébé au centre qui
+    // porte le message, le landau n'est plus qu'un élément de décor.
     this._drawPram(
       ctx,
-      (room.col + room.w - 3) * ts,
-      (room.row + 2.6) * ts,
+      (room.col + room.w - 2.4) * ts,
+      (room.row + room.h - 2.2) * ts,
       ts * 2.3
     );
 
