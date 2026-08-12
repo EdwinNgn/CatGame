@@ -574,20 +574,12 @@ class World {
     ctx.ellipse(cx, cy + ts * 0.3, ts * 3.2, ts * 2.4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Lit à barreaux, dans le coin inférieur gauche de la pièce
-    this._drawCrib(
-      ctx,
-      (room.col + 2.4) * ts,
-      (room.row + room.h - 2.1) * ts,
-      ts * 3.4
-    );
-
-    // Peluche, à côté du lit
+    // Peluche, dans le coin inférieur gauche
     this._drawTeddy(
       ctx,
-      (room.col + 4.7) * ts,
-      (room.row + room.h - 1.5) * ts,
-      ts * 1.15
+      (room.col + 2.6) * ts,
+      (room.row + room.h - 1.8) * ts,
+      ts * 1.5
     );
 
     // Landau vide, décalé sur la droite : c'est le bébé au centre qui porte
@@ -652,95 +644,173 @@ class World {
       ctx.stroke();
     });
 
-    // Halo blanc discret sous le bébé, pour le détacher du tapis sans le
-    // délaver : au-delà de 0.4 d'opacité il mangeait les couleurs de l'emoji.
-    const glow = ctx.createRadialGradient(cx, cy, size * 0.05, cx, cy, size * 0.44);
-    glow.addColorStop(0, 'rgba(255,255,255,0.55)');
+    // Halo blanc discret sous le bébé, pour le détacher du tapis
+    const glow = ctx.createRadialGradient(cx, cy, size * 0.05, cx, cy, size * 0.5);
+    glow.addColorStop(0, 'rgba(255,255,255,0.5)');
     glow.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(cx, cy, size * 0.44, 0, Math.PI * 2);
+    ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Le bébé lui-même, en grand. Couleur opaque avant l'emoji, sinon il
-    // héritait du dégradé du halo et sortait délavé.
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 1;
-    ctx.font = emojiFont(size * 1.05);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(ICONS.baby, cx, cy + size * 0.02);
+    this._drawSwaddledBaby(ctx, cx, cy, size * 1.15);
   }
 
   /**
-   * Lit à barreaux vu de dessus : cadre en bois, barreaux sur les quatre
-   * côtés, matelas et petite couverture. Tête en haut, comme le landau.
+   * Bébé emmailloté, vu de face : tête ronde en haut, corps en cocon vert
+   * avec le drap replié en diagonale. Dessiné en primitives plutôt qu'en
+   * emoji, pour maîtriser l'allure et le rendu sur tous les appareils.
    */
-  _drawCrib(ctx, cx, cy, size) {
-    const w = size;
-    const h = size * 1.15;
-    const x = cx - w / 2;
-    const y = cy - h / 2;
-    const wood = '#a5825f';
-    const woodDark = '#84663f';
+  _drawSwaddledBaby(ctx, cx, cy, size) {
+    const skin = '#f2cfa8';
+    const skinShade = '#e6bd93';
+    const wrapDark = '#8fd4c4';
+    const wrapLight = '#d8f0e6';
 
-    // Ombre
-    ctx.fillStyle = 'rgba(50,38,26,0.16)';
-    this._roundRect(ctx, x + 3, y + 5, w, h, size * 0.1);
+    const headR = size * 0.2;
+    const headY = cy - size * 0.24;
+    const bodyTop = headY + headR * 0.75;
+    const bodyH = size * 0.56;
+    const bodyW = size * 0.42;
+
+    // ---- Corps : cocon arrondi, plus large en bas
+    ctx.fillStyle = wrapDark;
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW * 0.42, bodyTop);
+    ctx.quadraticCurveTo(cx - bodyW * 0.62, bodyTop + bodyH * 0.55,
+                         cx - bodyW * 0.34, bodyTop + bodyH * 0.92);
+    ctx.quadraticCurveTo(cx, bodyTop + bodyH * 1.14,
+                         cx + bodyW * 0.34, bodyTop + bodyH * 0.92);
+    ctx.quadraticCurveTo(cx + bodyW * 0.62, bodyTop + bodyH * 0.55,
+                         cx + bodyW * 0.42, bodyTop);
+    ctx.closePath();
     ctx.fill();
 
-    // Cadre extérieur
-    this._fillRound(ctx, x, y, w, h, size * 0.1, wood);
-    ctx.strokeStyle = woodDark;
-    ctx.lineWidth = Math.max(1.5, size * 0.03);
-    this._roundRect(ctx, x, y, w, h, size * 0.1);
-    ctx.stroke();
-
-    // Intérieur : matelas
-    const m = size * 0.13;
-    this._fillRound(ctx, x + m, y + m, w - m * 2, h - m * 2, size * 0.06, '#f6f1e7');
-
-    // Couverture, aux deux tiers du bas
+    // Drap replié : un pan clair en diagonale, comme sur un vrai lange
     ctx.save();
     ctx.beginPath();
-    this._roundRect(ctx, x + m, y + m, w - m * 2, h - m * 2, size * 0.06);
+    ctx.moveTo(cx - bodyW * 0.42, bodyTop);
+    ctx.quadraticCurveTo(cx - bodyW * 0.62, bodyTop + bodyH * 0.55,
+                         cx - bodyW * 0.34, bodyTop + bodyH * 0.92);
+    ctx.quadraticCurveTo(cx, bodyTop + bodyH * 1.14,
+                         cx + bodyW * 0.34, bodyTop + bodyH * 0.92);
+    ctx.quadraticCurveTo(cx + bodyW * 0.62, bodyTop + bodyH * 0.55,
+                         cx + bodyW * 0.42, bodyTop);
+    ctx.closePath();
     ctx.clip();
-    ctx.fillStyle = '#bcd9e6';
-    ctx.fillRect(x + m, y + h * 0.42, w - m * 2, h);
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = Math.max(1.2, size * 0.022);
+
+    /*
+     * Le pan clair ne couvre que la partie gauche/haute du cocon : une
+     * première version l'étalait sur presque tout le corps et la couleur
+     * verte disparaissait, on ne lisait plus le lange.
+     */
+    ctx.fillStyle = wrapLight;
     ctx.beginPath();
-    ctx.moveTo(x + m, y + h * 0.42);
-    ctx.lineTo(x + w - m, y + h * 0.42);
+    ctx.moveTo(cx - bodyW * 0.7, bodyTop - bodyH * 0.05);
+    ctx.lineTo(cx + bodyW * 0.24, bodyTop - bodyH * 0.05);
+    ctx.lineTo(cx - bodyW * 0.7, bodyTop + bodyH * 0.86);
+    ctx.closePath();
+    ctx.fill();
+
+    // Deuxième pan, en bas à droite, qui croise le premier
+    ctx.beginPath();
+    ctx.moveTo(cx + bodyW * 0.7, bodyTop + bodyH * 0.34);
+    ctx.lineTo(cx + bodyW * 0.7, bodyTop + bodyH * 0.72);
+    ctx.lineTo(cx - bodyW * 0.2, bodyTop + bodyH * 1.15);
+    ctx.closePath();
+    ctx.fill();
+
+    // Bords des plis, tracés clairs
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = Math.max(1.2, size * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(cx + bodyW * 0.24, bodyTop - bodyH * 0.05);
+    ctx.lineTo(cx - bodyW * 0.7, bodyTop + bodyH * 0.86);
+    ctx.moveTo(cx + bodyW * 0.7, bodyTop + bodyH * 0.34);
+    ctx.lineTo(cx - bodyW * 0.2, bodyTop + bodyH * 1.15);
     ctx.stroke();
     ctx.restore();
 
-    // Oreiller en tête
-    this._fillRound(ctx, cx - w * 0.24, y + m * 1.5, w * 0.48, h * 0.14, size * 0.05, '#ffffff');
+    // Col du lange, juste sous le menton
+    ctx.fillStyle = wrapLight;
+    ctx.beginPath();
+    ctx.ellipse(cx, bodyTop + size * 0.02, bodyW * 0.46, size * 0.07, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Barreaux : verticaux sur les côtés longs, horizontaux en tête et pied
-    ctx.strokeStyle = woodDark;
-    ctx.lineWidth = Math.max(1.2, size * 0.028);
-    const nSide = 7;
-    for (let i = 1; i < nSide; i++) {
-      const py = y + (h / nSide) * i;
+    // ---- Oreilles
+    ctx.fillStyle = skinShade;
+    [-1, 1].forEach((s) => {
       ctx.beginPath();
-      ctx.moveTo(x + 1.5, py);
-      ctx.lineTo(x + m, py);
-      ctx.moveTo(x + w - m, py);
-      ctx.lineTo(x + w - 1.5, py);
-      ctx.stroke();
-    }
-    const nEnd = 5;
-    for (let i = 1; i < nEnd; i++) {
-      const pxx = x + (w / nEnd) * i;
+      ctx.arc(cx + s * headR * 0.94, headY + headR * 0.1, headR * 0.26, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // ---- Tête
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.ellipse(cx, headY, headR, headR * 1.02, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ---- Visage
+    // Sourcils
+    ctx.strokeStyle = 'rgba(90,62,40,0.75)';
+    ctx.lineWidth = Math.max(1, size * 0.016);
+    ctx.lineCap = 'round';
+    [-1, 1].forEach((s) => {
       ctx.beginPath();
-      ctx.moveTo(pxx, y + 1.5);
-      ctx.lineTo(pxx, y + m);
-      ctx.moveTo(pxx, y + h - m);
-      ctx.lineTo(pxx, y + h - 1.5);
+      ctx.arc(cx + s * headR * 0.38, headY - headR * 0.28, headR * 0.26,
+              Math.PI * 1.15, Math.PI * 1.85);
       ctx.stroke();
-    }
+    });
+
+    // Yeux : blanc, iris sombre, reflet
+    [-1, 1].forEach((s) => {
+      const ex = cx + s * headR * 0.38;
+      const ey = headY - headR * 0.02;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, headR * 0.2, headR * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4a3526';
+      ctx.beginPath();
+      ctx.arc(ex, ey, headR * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(ex + headR * 0.05, ey - headR * 0.06, headR * 0.045, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Petit nez
+    ctx.fillStyle = skinShade;
+    ctx.beginPath();
+    ctx.ellipse(cx, headY + headR * 0.26, headR * 0.075, headR * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bouche ouverte, avec la langue
+    ctx.fillStyle = '#5a3b2a';
+    ctx.beginPath();
+    ctx.moveTo(cx - headR * 0.3, headY + headR * 0.44);
+    ctx.quadraticCurveTo(cx, headY + headR * 0.88, cx + headR * 0.3, headY + headR * 0.44);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#eb9ec0';
+    ctx.beginPath();
+    ctx.ellipse(cx, headY + headR * 0.66, headR * 0.17, headR * 0.13, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // La mèche en boucle sur le crâne, signature du dessin
+    ctx.strokeStyle = '#e8b93f';
+    ctx.lineWidth = Math.max(1.6, size * 0.026);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx + headR * 0.06, headY - headR * 1.12, headR * 0.2,
+            Math.PI * 0.75, Math.PI * 2.35);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + headR * 0.02, headY - headR * 0.96);
+    ctx.lineTo(cx - headR * 0.04, headY - headR * 0.7);
+    ctx.stroke();
   }
 
   /** Peluche : un ourson vu de dessus, bras et jambes écartés. */

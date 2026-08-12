@@ -25,7 +25,6 @@ const ICONS = {
   cat: '\u{1F431}',        // 🐱 tête de chat
   paw: '\u{1F43E}',        // 🐾 empreintes
   pregnant: '\u{1F930}',   // 🤰 femme enceinte
-  baby: '\u{1F476}',       // 👶 bébé
   heart: '\u{1F90D}',      // 🤍 cœur blanc
   bottle: '\u{1F37C}'      // 🍼 biberon
 };
