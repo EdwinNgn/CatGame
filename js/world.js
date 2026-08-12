@@ -517,7 +517,14 @@ class World {
       }
 
       if (locked) {
-        this._drawPadlock(ctx, x + w / 2, y + h / 2, ts * 0.6);
+        /*
+         * Le cadenas est dimensionné sur la largeur de la porte, pas sur une
+         * fraction de la case : il était auparavant si petit (3 % de la
+         * surface de la porte) qu'il passait inaperçu, surtout sur mobile où
+         * le plan est réduit.
+         */
+        const span = Math.min(w, h);
+        this._drawPadlock(ctx, x + w / 2, y + h / 2, span * 1.15);
       }
     });
   }
@@ -2043,7 +2050,9 @@ class World {
       const size = Math.max(12, ts * 0.62);
 
       if (stillLocked) {
-        this._drawPadlock(ctx, cx, cy, size);
+        // Plus grand que le « ? » des autres pièces : c'est le repère qui
+        // indique qu'il faudra une clé, il doit se voir de loin.
+        this._drawPadlock(ctx, cx, cy, ts * 2.2);
       } else {
         ctx.fillStyle = 'rgba(255,255,255,0.34)';
         ctx.font = `600 ${size}px sans-serif`;
@@ -2069,31 +2078,39 @@ class World {
    * blanc semi-transparent, ce qui le faisait disparaître sur la porte.
    */
   _drawPadlock(ctx, cx, cy, size) {
-    const w = size * 0.62;
-    const h = size * 0.48;
+    const w = size * 0.6;
+    const h = size * 0.46;
     const x = cx - w / 2;
-    const y = cy - h * 0.22;
+    const y = cy - h * 0.18;
+
+    // Pastille sombre derrière : détache le cadenas de la barre de la porte
+    // comme du voile du brouillard, quel que soit le fond.
+    ctx.fillStyle = 'rgba(40,28,16,0.75)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
+    ctx.fill();
 
     // Anse
-    ctx.strokeStyle = '#f0d68a';
-    ctx.lineWidth = Math.max(1.4, size * 0.09);
+    ctx.strokeStyle = '#f5dc94';
+    ctx.lineWidth = Math.max(1.6, size * 0.1);
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(cx, y, w * 0.32, Math.PI, 0);
+    ctx.arc(cx, y, w * 0.34, Math.PI, 0);
     ctx.stroke();
 
     // Corps
-    ctx.fillStyle = '#f0d68a';
+    ctx.fillStyle = '#f5dc94';
     this._roundRect(ctx, x, y, w, h, size * 0.1);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(90,60,25,0.75)';
-    ctx.lineWidth = Math.max(1, size * 0.035);
+    ctx.strokeStyle = 'rgba(70,45,15,0.8)';
+    ctx.lineWidth = Math.max(1, size * 0.04);
     this._roundRect(ctx, x, y, w, h, size * 0.1);
     ctx.stroke();
 
     // Trou de serrure
-    ctx.fillStyle = '#6b4a1e';
+    ctx.fillStyle = '#5c3d14';
     ctx.beginPath();
-    ctx.arc(cx, y + h * 0.45, Math.max(1, size * 0.07), 0, Math.PI * 2);
+    ctx.arc(cx, y + h * 0.44, Math.max(1.2, size * 0.075), 0, Math.PI * 2);
     ctx.fill();
   }
 }
