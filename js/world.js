@@ -492,95 +492,38 @@ class World {
   }
 
   /**
-   * Ouverture entre deux pièces, vue de dessus.
+   * Porte vue de dessus : une simple barre en travers de l'ouverture.
    *
-   * Une porte se lit à trois choses : les deux montants du chambranle de part
-   * et d'autre du passage, le seuil, et pour une porte fermée le battant qui
-   * barre l'ouverture avec sa poignée. La version précédente remplissait
-   * simplement la case d'un carré brun, ce qui ne ressemblait à rien.
+   * Vue du dessus, une porte n'est que le battant : une barre. Ouverte ou
+   * fermée, c'est la même barre ; seul un cadenas signale qu'elle est
+   * verrouillée. Inutile de dessiner chambranle, seuil et poignée, qui ne se
+   * lisent pas à cette échelle.
    *
-   * L'orientation vient des murs voisins : on regarde de quel côté sont les
-   * murs pour savoir si le passage est horizontal ou vertical.
-   *
-   * @param {boolean} closed dessine le battant fermé
+   * @param {boolean} locked ajoute le cadenas
    */
-  _drawDoorway(ctx, x, y, ts, c, r, closed) {
+  _drawDoorway(ctx, x, y, ts, c, r, locked) {
     const isWall = (cc, rr) => {
       if (!this.tiles[rr] || this.tiles[rr][cc] === undefined) return true;
       const t = this.tiles[rr][cc];
       return t === TILE.WALL || t === TILE.OUTSIDE;
     };
 
-    /*
-     * Sens du passage : on traverse la porte perpendiculairement au mur qui
-     * la contient. Une porte percée dans un mur VERTICAL (murs au-dessus et
-     * en-dessous d'elle) se franchit horizontalement, donc son battant est
-     * vertical. C'est le cas de la quasi-totalité des portes du plan.
-     *
-     * Comme les cases voisines dans le sens du passage ne sont pas toujours
-     * des murs (une porte au coin d'une pièce, par exemple), on compare les
-     * deux axes plutôt que d'exiger deux murs stricts.
-     */
+    // La barre suit le mur qui porte la porte : on compare les deux axes.
     const wallsVert = (isWall(c, r - 1) ? 1 : 0) + (isWall(c, r + 1) ? 1 : 0);
     const wallsHorz = (isWall(c - 1, r) ? 1 : 0) + (isWall(c + 1, r) ? 1 : 0);
-
-    // Battant horizontal seulement si le mur porteur est horizontal.
     const horizontal = wallsHorz > wallsVert;
 
-    const frame = '#b9ad97';   // chambranle, ton du mur en plus soutenu
-    const sill = 'rgba(255,240,214,0.42)';
-    const panel = '#7d4a34';
-    const panelEdge = 'rgba(255,255,255,0.16)';
+    // Le sol de la pièce reste visible autour de la barre.
+    const thick = Math.max(3, ts * 0.3);
+    ctx.fillStyle = locked ? '#6f4028' : '#8a5a3c';
 
-    // Seuil : bande claire dans le sens du passage
-    ctx.fillStyle = sill;
-    ctx.fillRect(x, y, ts, ts);
-
-    // Montants du chambranle, contre les murs
-    const jamb = Math.max(2.5, ts * 0.11);
-    ctx.fillStyle = frame;
     if (horizontal) {
-      ctx.fillRect(x, y, ts, jamb);
-      ctx.fillRect(x, y + ts - jamb, ts, jamb);
+      ctx.fillRect(x, y + (ts - thick) / 2, ts, thick);
     } else {
-      ctx.fillRect(x, y, jamb, ts);
-      ctx.fillRect(x + ts - jamb, y, jamb, ts);
+      ctx.fillRect(x + (ts - thick) / 2, y, thick, ts);
     }
 
-    if (!closed) {
-      // Porte ouverte : le battant est rabattu contre le mur, sur le côté.
-      ctx.fillStyle = panel;
-      const leaf = Math.max(2.5, ts * 0.13);
-      if (horizontal) ctx.fillRect(x, y + jamb, leaf, ts - jamb * 2);
-      else ctx.fillRect(x + jamb, y, ts - jamb * 2, leaf);
-      return;
-    }
-
-    // Porte fermée : le battant barre toute l'ouverture.
-    const inset = jamb + 1;
-    if (horizontal) {
-      ctx.fillStyle = panel;
-      ctx.fillRect(x, y + inset, ts, ts - inset * 2);
-      // Rainure du panneau
-      ctx.strokeStyle = panelEdge;
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(x + ts * 0.14, y + inset + 2.5, ts * 0.72, ts - inset * 2 - 5);
-      // Poignée, côté ouverture
-      ctx.fillStyle = '#e8c463';
-      ctx.beginPath();
-      ctx.arc(x + ts * 0.78, y + ts * 0.5, Math.max(1.8, ts * 0.065), 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = panel;
-      ctx.fillRect(x + inset, y, ts - inset * 2, ts);
-      ctx.strokeStyle = panelEdge;
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(x + inset + 2.5, y + ts * 0.14, ts - inset * 2 - 5, ts * 0.72);
-      ctx.fillStyle = '#e8c463';
-      ctx.beginPath();
-      ctx.arc(x + ts * 0.5, y + ts * 0.78, Math.max(1.8, ts * 0.065), 0, Math.PI * 2);
-      ctx.fill();
-    }
+    if (locked) this._drawPadlock(ctx, x + ts / 2, y + ts / 2, ts * 0.5);
   }
 
   /**
@@ -2086,25 +2029,40 @@ class World {
    * dans un canvas dépend des polices du système et ne s'affiche pas
    * partout de la même façon.
    */
+  /**
+   * Cadenas, dessiné en primitives plutôt qu'en emoji dont le rendu dépend
+   * des polices du système.
+   *
+   * Doré et opaque : il doit rester lisible aussi bien sur la barre brune
+   * d'une porte que sur le voile sombre du brouillard. Il était auparavant
+   * blanc semi-transparent, ce qui le faisait disparaître sur la porte.
+   */
   _drawPadlock(ctx, cx, cy, size) {
-    const w = size * 0.72;
-    const h = size * 0.56;
+    const w = size * 0.62;
+    const h = size * 0.48;
     const x = cx - w / 2;
-    const y = cy - h * 0.28;
+    const y = cy - h * 0.22;
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = Math.max(1.6, size * 0.1);
+    // Anse
+    ctx.strokeStyle = '#f0d68a';
+    ctx.lineWidth = Math.max(1.4, size * 0.09);
     ctx.beginPath();
-    ctx.arc(cx, y, w * 0.3, Math.PI, 0);
+    ctx.arc(cx, y, w * 0.32, Math.PI, 0);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    this._roundRect(ctx, x, y, w, h, size * 0.12);
+    // Corps
+    ctx.fillStyle = '#f0d68a';
+    this._roundRect(ctx, x, y, w, h, size * 0.1);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(90,60,25,0.75)';
+    ctx.lineWidth = Math.max(1, size * 0.035);
+    this._roundRect(ctx, x, y, w, h, size * 0.1);
+    ctx.stroke();
 
-    ctx.fillStyle = 'rgba(24,30,34,0.9)';
+    // Trou de serrure
+    ctx.fillStyle = '#6b4a1e';
     ctx.beginPath();
-    ctx.arc(cx, y + h * 0.48, size * 0.075, 0, Math.PI * 2);
+    ctx.arc(cx, y + h * 0.45, Math.max(1, size * 0.07), 0, Math.PI * 2);
     ctx.fill();
   }
 }

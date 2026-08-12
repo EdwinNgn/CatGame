@@ -279,9 +279,9 @@ const CONFIG = {
 
     /**
      * Filet de sécurité : délai, en millisecondes, décompté à partir de
-     * l'OUVERTURE de la dernière porte. Passé ce temps l'annonce s'affiche,
-     * même si les joueurs hésitent sur le seuil ou n'entrent pas.
-     * S'approcher du bébé la déclenche immédiatement, sans attendre.
+     * l'ENTRÉE dans la chambre. Passé ce temps l'annonce s'affiche même si
+     * l'on ne s'est pas approché du bébé. S'en approcher la déclenche
+     * immédiatement, sans attendre.
      * Mets 0 pour n'avoir que le déclenchement par proximité.
      */
     autoDelay: 3000

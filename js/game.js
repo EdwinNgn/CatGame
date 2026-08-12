@@ -407,9 +407,6 @@ const Game = {
           this.world.isAtDoor(p.x, p.y, 'nursery') && this.carrying === 'key2') {
         this.carrying = null;
         this.world.unlock('nursery');
-        // Le compte à rebours part dès l'ouverture, et non à l'entrée dans
-        // la pièce : on ne peut donc pas rester bloqué sur le seuil.
-        this._nurserySince = performance.now();
         this._completeStep();
         return;
       }
@@ -433,20 +430,25 @@ const Game = {
   },
 
   /**
-   * L'annonce, une fois la dernière porte ouverte. Deux déclencheurs :
+   * L'annonce, une fois dans la chambre. Deux déclencheurs :
    *
    *   1. s'approcher du bébé, au centre de la pièce : immédiat ;
-   *   2. un délai décompté depuis l'OUVERTURE DE LA PORTE
-   *      (`reveal.autoDelay`) : filet de sécurité, qui tombe même si les
-   *      joueurs hésitent sur le seuil ou n'entrent pas.
+   *   2. un délai décompté depuis l'ENTRÉE dans la pièce
+   *      (`reveal.autoDelay`) : filet de sécurité, au cas où l'on ne
+   *      s'approcherait pas du centre.
    *
-   * Le chronomètre n'est pas remis à zéro si l'on ressort : une fois la porte
-   * ouverte, l'annonce finira toujours par arriver.
+   * Le chronomètre repart de zéro si l'on ressort de la pièce.
    */
   _checkNurseryEntry() {
     const step = this.step;
     if (!step || step.id !== 'reach-pram') return;
     if (this.revealed) return;
+
+    const inside = this.players.some((p) => this.world.isInNursery(p.x, p.y));
+    if (!inside) {
+      this._nurserySince = null;
+      return;
+    }
 
     // 1. Proximité du bébé
     if (this.players.some((p) => this.world.isNearPram(p.x, p.y))) {
@@ -454,11 +456,18 @@ const Game = {
       return;
     }
 
-    // 2. Délai depuis l'ouverture de la porte
+    // 2. Délai depuis l'entrée dans la pièce.
     const delay = CONFIG.reveal.autoDelay;
-    if (!delay || this._nurserySince === null) return;
+    if (!delay) return;
 
-    if (performance.now() - this._nurserySince >= delay) this._reveal();
+    // `null` et non 0 comme valeur « pas encore entré » : un horodatage peut
+    // légitimement valoir 0, ce qui décalerait le départ du décompte.
+    const now = performance.now();
+    if (this._nurserySince === null) {
+      this._nurserySince = now;
+      return;
+    }
+    if (now - this._nurserySince >= delay) this._reveal();
   },
 
   /** Bascule sur l'annonce finale. */
