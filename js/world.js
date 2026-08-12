@@ -574,7 +574,33 @@ class World {
     ctx.ellipse(cx, cy + ts * 0.3, ts * 3.2, ts * 2.4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    this._drawPram(ctx, cx, cy - ts * 0.2, ts * 2.6);
+    // Lit à barreaux, dans le coin inférieur gauche de la pièce
+    this._drawCrib(
+      ctx,
+      (room.col + 2.4) * ts,
+      (room.row + room.h - 2.1) * ts,
+      ts * 3.4
+    );
+
+    // Peluche, à côté du lit
+    this._drawTeddy(
+      ctx,
+      (room.col + 4.7) * ts,
+      (room.row + room.h - 1.5) * ts,
+      ts * 1.15
+    );
+
+    // Landau vide, décalé sur la droite : c'est le bébé au centre qui porte
+    // le message, le landau n'est plus qu'un élément de décor.
+    this._drawPram(
+      ctx,
+      (room.col + room.w - 3) * ts,
+      (room.row + 2.6) * ts,
+      ts * 2.3
+    );
+
+    // Le bébé, au centre sur son tapis : c'est lui qu'on doit voir en premier.
+    this._drawBigBaby(ctx, cx, cy + ts * 0.2, ts * 2.8);
 
     // Guirlande de fanions au mur du haut
     const gy = (room.row + 0.5) * ts;
@@ -599,9 +625,208 @@ class World {
     }
   }
 
+  /**
+   * Le bébé au centre de la chambre, en grand, sur un tapis rond.
+   *
+   * C'est l'élément qui porte l'annonce : il est volontairement gros et
+   * lisible, plutôt que caché dans un landau où on distinguait mal de quoi
+   * il s'agissait. L'emoji est dessiné par-dessus un tapis, avec un halo
+   * doux pour qu'il se détache du parquet.
+   */
+  _drawBigBaby(ctx, cx, cy, size) {
+    // Tapis rond sous le bébé
+    ctx.fillStyle = '#f6dfe4';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, size * 0.78, size * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#e8bfc8';
+    ctx.lineWidth = Math.max(2, size * 0.035);
+    ctx.stroke();
+
+    // Deux anneaux concentriques, comme un tapis tressé
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = Math.max(1.5, size * 0.022);
+    [0.58, 0.38].forEach((r) => {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size * r, size * (r * 0.9), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    // Halo blanc discret sous le bébé, pour le détacher du tapis sans le
+    // délaver : au-delà de 0.4 d'opacité il mangeait les couleurs de l'emoji.
+    const glow = ctx.createRadialGradient(cx, cy, size * 0.05, cx, cy, size * 0.44);
+    glow.addColorStop(0, 'rgba(255,255,255,0.55)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.44, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Le bébé lui-même, en grand. Couleur opaque avant l'emoji, sinon il
+    // héritait du dégradé du halo et sortait délavé.
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 1;
+    ctx.font = emojiFont(size * 1.05);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ICONS.baby, cx, cy + size * 0.02);
+  }
+
+  /**
+   * Lit à barreaux vu de dessus : cadre en bois, barreaux sur les quatre
+   * côtés, matelas et petite couverture. Tête en haut, comme le landau.
+   */
+  _drawCrib(ctx, cx, cy, size) {
+    const w = size;
+    const h = size * 1.15;
+    const x = cx - w / 2;
+    const y = cy - h / 2;
+    const wood = '#a5825f';
+    const woodDark = '#84663f';
+
+    // Ombre
+    ctx.fillStyle = 'rgba(50,38,26,0.16)';
+    this._roundRect(ctx, x + 3, y + 5, w, h, size * 0.1);
+    ctx.fill();
+
+    // Cadre extérieur
+    this._fillRound(ctx, x, y, w, h, size * 0.1, wood);
+    ctx.strokeStyle = woodDark;
+    ctx.lineWidth = Math.max(1.5, size * 0.03);
+    this._roundRect(ctx, x, y, w, h, size * 0.1);
+    ctx.stroke();
+
+    // Intérieur : matelas
+    const m = size * 0.13;
+    this._fillRound(ctx, x + m, y + m, w - m * 2, h - m * 2, size * 0.06, '#f6f1e7');
+
+    // Couverture, aux deux tiers du bas
+    ctx.save();
+    ctx.beginPath();
+    this._roundRect(ctx, x + m, y + m, w - m * 2, h - m * 2, size * 0.06);
+    ctx.clip();
+    ctx.fillStyle = '#bcd9e6';
+    ctx.fillRect(x + m, y + h * 0.42, w - m * 2, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = Math.max(1.2, size * 0.022);
+    ctx.beginPath();
+    ctx.moveTo(x + m, y + h * 0.42);
+    ctx.lineTo(x + w - m, y + h * 0.42);
+    ctx.stroke();
+    ctx.restore();
+
+    // Oreiller en tête
+    this._fillRound(ctx, cx - w * 0.24, y + m * 1.5, w * 0.48, h * 0.14, size * 0.05, '#ffffff');
+
+    // Barreaux : verticaux sur les côtés longs, horizontaux en tête et pied
+    ctx.strokeStyle = woodDark;
+    ctx.lineWidth = Math.max(1.2, size * 0.028);
+    const nSide = 7;
+    for (let i = 1; i < nSide; i++) {
+      const py = y + (h / nSide) * i;
+      ctx.beginPath();
+      ctx.moveTo(x + 1.5, py);
+      ctx.lineTo(x + m, py);
+      ctx.moveTo(x + w - m, py);
+      ctx.lineTo(x + w - 1.5, py);
+      ctx.stroke();
+    }
+    const nEnd = 5;
+    for (let i = 1; i < nEnd; i++) {
+      const pxx = x + (w / nEnd) * i;
+      ctx.beginPath();
+      ctx.moveTo(pxx, y + 1.5);
+      ctx.lineTo(pxx, y + m);
+      ctx.moveTo(pxx, y + h - m);
+      ctx.lineTo(pxx, y + h - 1.5);
+      ctx.stroke();
+    }
+  }
+
+  /** Peluche : un ourson vu de dessus, bras et jambes écartés. */
+  _drawTeddy(ctx, cx, cy, size) {
+    const fur = '#c99a6a';
+    const furDark = '#a97f52';
+    const belly = '#e8d3b8';
+
+    // Ombre
+    ctx.fillStyle = 'rgba(50,38,26,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + size * 0.5, size * 0.42, size * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bras et jambes, quatre pattes arrondies
+    ctx.fillStyle = furDark;
+    [[-0.42, -0.1], [0.42, -0.1], [-0.3, 0.42], [0.3, 0.42]].forEach(([ox, oy]) => {
+      ctx.beginPath();
+      ctx.ellipse(cx + size * ox, cy + size * oy, size * 0.17, size * 0.15, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Corps
+    ctx.fillStyle = fur;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + size * 0.12, size * 0.32, size * 0.34, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ventre clair
+    ctx.fillStyle = belly;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + size * 0.16, size * 0.18, size * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Oreilles
+    ctx.fillStyle = furDark;
+    [-0.26, 0.26].forEach((ox) => {
+      ctx.beginPath();
+      ctx.arc(cx + size * ox, cy - size * 0.42, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Tête
+    ctx.fillStyle = fur;
+    ctx.beginPath();
+    ctx.arc(cx, cy - size * 0.28, size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Museau
+    ctx.fillStyle = belly;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - size * 0.2, size * 0.14, size * 0.11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Yeux et truffe
+    ctx.fillStyle = '#3b2b1e';
+    [-0.11, 0.11].forEach((ox) => {
+      ctx.beginPath();
+      ctx.arc(cx + size * ox, cy - size * 0.34, size * 0.045, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.beginPath();
+    ctx.arc(cx, cy - size * 0.22, size * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   /** Landau vu de dessus, avec le bébé endormi à l'intérieur. */
+  /**
+   * Landau vu de dessus.
+   *
+   * Le dessin est fait couché (tête à gauche, pieds à droite) parce que c'est
+   * plus simple à écrire, puis pivoté d'un quart de tour : à l'écran la tête
+   * se retrouve EN HAUT, couchée dans le sens de la pièce. C'est l'orientation
+   * qu'on attend d'un lit vu de dessus.
+   */
   _drawPram(ctx, cx, cy, size) {
-    // Landau vu de dessus, tête à gauche, pieds à droite.
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.PI / 2);   // tête vers le haut de l'écran
+    ctx.translate(-cx, -cy);
+    this._drawPramFlat(ctx, cx, cy, size);
+    ctx.restore();
+  }
+
+  /** Le tracé, en repère couché : tête à gauche, pieds à droite. */
+  _drawPramFlat(ctx, cx, cy, size) {
     const w = size;
     const h = size * 0.66;
     const x = cx - w / 2;
@@ -720,38 +945,14 @@ class World {
     ctx.arc(cx + w * 0.44, cy, h * 0.2, Math.PI * 1.6, Math.PI * 0.4);
     ctx.stroke();
 
-    // La tête du bébé, sous la capote
-    const bx = headX;
-    const by = cy;
-
-    ctx.fillStyle = '#f6d9c0';
-    ctx.beginPath();
-    ctx.arc(bx, by, br, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Yeux fermés
-    ctx.strokeStyle = 'rgba(90,65,45,0.8)';
-    ctx.lineWidth = Math.max(1, size * 0.016);
-    [-0.4, 0.4].forEach((o) => {
-      ctx.beginPath();
-      ctx.arc(bx, by + br * o, br * 0.3, Math.PI * 1.15, Math.PI * 1.85);
-      ctx.stroke();
-    });
-
-    // Joues
-    ctx.fillStyle = 'rgba(226,138,131,0.45)';
-    [-0.55, 0.55].forEach((o) => {
-      ctx.beginPath();
-      ctx.arc(bx + br * 0.3, by + br * o, br * 0.22, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Mèche de cheveux, du côté de la capote
-    ctx.strokeStyle = '#8a6a4d';
-    ctx.lineWidth = Math.max(1, size * 0.026);
-    ctx.beginPath();
-    ctx.arc(bx - br * 0.75, by, br * 0.32, Math.PI * 1.4, Math.PI * 0.6);
-    ctx.stroke();
+    // Le landau reste vide : le bébé est au centre de la pièce, en grand.
+    // Un oreiller sous la capote suffit à suggérer qu'il l'attend.
+    this._fillRound(
+      ctx,
+      headX - br * 0.9, cy - h * 0.2,
+      br * 2, h * 0.4,
+      br * 0.5, '#ffffff'
+    );
   }
 
   // ------------------------------------------------------------------
