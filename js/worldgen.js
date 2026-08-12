@@ -159,9 +159,90 @@ const WorldGen = {
       tiles, furniture, cols, rows, spawns, things, doorTiles, warnings
     };
     map.pieces = this._groupFurniture(map);
+    map.doorGroups = this._groupDoors(map);
     map.zones = this._buildZones(map);
     this._checkReachability(map);
     return map;
+  },
+
+  /**
+   * Regroupe les cases de porte contiguës et de même type en une seule porte.
+   *
+   * Une porte peut faire deux cases de large : sans regroupement, elle était
+   * dessinée deux fois et se lisait comme deux portes côte à côte. En la
+   * traitant comme un seul rectangle, on obtient une barre continue et un
+   * seul cadenas, quelle que soit sa largeur.
+   *
+   * @returns {{lock:(string|null), col:number, row:number, w:number, h:number,
+   *            horizontal:boolean}[]}
+   */
+  _groupDoors(map) {
+    const { tiles, cols, rows } = map;
+
+    const doorKind = (t) => {
+      if (t === TILE.DOOR) return 'plain';
+      if (t === TILE.LOCKED_BEDROOM) return 'bedroom';
+      if (t === TILE.LOCKED_NURSERY) return 'nursery';
+      return null;
+    };
+
+    const seen = new Uint8Array(cols * rows);
+    const groups = [];
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const kind = doorKind(tiles[r][c]);
+        if (!kind || seen[r * cols + c]) continue;
+
+        // Étend vers la droite puis vers le bas, comme pour les meubles.
+        let w = 0;
+        while (c + w < cols && doorKind(tiles[r][c + w]) === kind &&
+               !seen[r * cols + c + w]) w++;
+
+        let h = 1;
+        outer: while (r + h < rows) {
+          for (let i = 0; i < w; i++) {
+            if (doorKind(tiles[r + h][c + i]) !== kind ||
+                seen[(r + h) * cols + c + i]) break outer;
+          }
+          h++;
+        }
+
+        for (let rr = r; rr < r + h; rr++) {
+          for (let cc = c; cc < c + w; cc++) seen[rr * cols + cc] = 1;
+        }
+
+        /*
+         * Sens de la barre. Une porte allongée suit sa propre forme. Sur une
+         * porte carrée d'une seule case, la forme ne dit rien : on regarde
+         * alors les murs voisins, la barre suivant le mur qui la porte.
+         */
+        let horizontal;
+        if (w !== h) {
+          horizontal = w > h;
+        } else {
+          const isWall = (cc, rr) => {
+            if (!tiles[rr] || tiles[rr][cc] === undefined) return true;
+            const t = tiles[rr][cc];
+            return t === TILE.WALL || t === TILE.OUTSIDE;
+          };
+          /*
+           * Des murs à gauche ET à droite signifient que la porte est percée
+           * dans un mur horizontal : la barre est donc horizontale, et on la
+           * traverse verticalement.
+           */
+          const wallsLeftRight = (isWall(c - 1, r) ? 1 : 0) + (isWall(c + w, r) ? 1 : 0);
+          const wallsTopBottom = (isWall(c, r - 1) ? 1 : 0) + (isWall(c, r + h) ? 1 : 0);
+          horizontal = wallsLeftRight > wallsTopBottom;
+        }
+
+        groups.push({
+          lock: kind === 'plain' ? null : kind,
+          col: c, row: r, w, h, horizontal
+        });
+      }
+    }
+    return groups;
   },
 
   /**

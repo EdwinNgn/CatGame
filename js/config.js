@@ -83,23 +83,23 @@ const CONFIG = {
     '#...BBBBBBB..X#~~~~~~################',
     '#...BBBBBBB..X#~~~~~~#KKKKKKKKKKK:::#',
     '#...BBBBBBB...########KKKKKKKKKKK:::#',
-    '#.............#AA....:::::::t:::::TT#',
-    '#.............r......:::::::::::::TT#',
-    '#AA...........#......#FFLLLUU:::::::#',
+    '#.............#AA....+::::::t:::::TT#',
+    '#.............r......+::::::::::::TT#',
+    '#AA...........r......#FFLLLUU:::::::#',
     '#AA...GGG.....#......#LLLLLUU:::::::#',
     '###############.12...########.......#',
-    '#DDDDDD...AAAA#.....................#',
-    '#DDDDDD...AAAA#...GG................#',
+    '#DDDDDD...AAAA#......+..............#',
+    '#DDDDDD...AAAA#...GG.+..............#',
     '#DDDDDD.......#..#######............#',
-    '#.............+.......X#...TTTTT....#',
-    '#.............#.......X#...TTTTT....#',
+    '#.............+..+....X#...TTTTT....#',
+    '#.............+..+....X#...TTTTT....#',
     '#.............#..#....X#............#',
     '#.............#..#MMUUU#............#',
     '#JJ...GGG.....#..#MMUUU#............#',
     '#JJ...GGG.....#..#######............#',
     '###############..#######P...........#',
     '#.............R..+:::::#VV........SS#',
-    '#.............#..#:::::#VV........SS#',
+    '#.............R..+:::::#VV........SS#',
     '#.............#+##:::NN#VV....k...SS#',
     '#.............#::#:::NN#VV........SS#',
     '#.............#::#:::NN#VV........SS#',
@@ -279,9 +279,9 @@ const CONFIG = {
 
     /**
      * Filet de sécurité : délai, en millisecondes, décompté à partir de
-     * l'ENTRÉE dans la chambre. Passé ce temps l'annonce s'affiche même si
-     * l'on ne s'est pas approché du bébé. S'en approcher la déclenche
-     * immédiatement, sans attendre.
+     * l'OUVERTURE de la dernière porte. Passé ce temps l'annonce s'affiche,
+     * même si les joueurs hésitent sur le seuil ou n'entrent pas.
+     * S'approcher du bébé la déclenche immédiatement, sans attendre.
      * Mets 0 pour n'avoir que le déclenchement par proximité.
      */
     autoDelay: 3000

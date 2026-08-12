@@ -14,6 +14,9 @@ class World {
     this.spawns = map.spawns;
     this.doorTiles = map.doorTiles;
 
+    /** Portes regroupées : une entrée par porte, même large de deux cases. */
+    this.doorGroups = map.doorGroups;
+
     /**
      * Cases réellement encloses de chaque pièce, meubles compris.
      * Sert à dessiner le voile au ras des murs plutôt que d'après un
@@ -397,6 +400,9 @@ class World {
       ctx.restore();
     });
 
+    // Portes : une barre par groupe de cases contiguës.
+    this._drawDoors(ctx);
+
     // Murs par-dessus, pour qu'ils restent nets.
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
@@ -479,16 +485,41 @@ class World {
       ctx.stroke();
     });
 
-    if (tile === TILE.DOOR) {
-      this._drawDoorway(ctx, x, y, ts, c, r, false);
-    }
+    // Les portes sont dessinées à part, par groupes de cases contiguës,
+    // pour qu'une porte large reste une seule barre. Voir `_drawDoors`.
+  }
 
-    if (tile === TILE.LOCKED_BEDROOM || tile === TILE.LOCKED_NURSERY) {
-      const open = (tile === TILE.LOCKED_BEDROOM)
-        ? this.locks.bedroom
-        : this.locks.nursery;
-      this._drawDoorway(ctx, x, y, ts, c, r, !open);
-    }
+  /**
+   * Dessine les portes, une par groupe de cases contiguës.
+   *
+   * Appelé après les sols et avant les murs : une porte large obtient ainsi
+   * une barre continue et un unique cadenas, au lieu d'un motif répété case
+   * par case qui se lisait comme plusieurs portes collées.
+   */
+  _drawDoors(ctx) {
+    const ts = this.tileSize;
+
+    (this.doorGroups || []).forEach((d) => {
+      const locked = d.lock ? !this.locks[d.lock] : false;
+      const x = d.col * ts;
+      const y = d.row * ts;
+      const w = d.w * ts;
+      const h = d.h * ts;
+
+      // Épaisseur de la barre : dans le sens de la traversée.
+      const thick = Math.max(3, ts * 0.3);
+      ctx.fillStyle = locked ? '#6f4028' : '#8a5a3c';
+
+      if (d.horizontal) {
+        ctx.fillRect(x, y + (h - thick) / 2, w, thick);
+      } else {
+        ctx.fillRect(x + (w - thick) / 2, y, thick, h);
+      }
+
+      if (locked) {
+        this._drawPadlock(ctx, x + w / 2, y + h / 2, ts * 0.6);
+      }
+    });
   }
 
   /**
