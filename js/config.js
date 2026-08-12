@@ -86,11 +86,11 @@ const CONFIG = {
     '#DDDDDD...SSSS#......+..............#',
     '#DDDDDD...SSSS#..LL..+..............#',
     '#DDDDDD.......#..#######............#',
-    '#.............+..+...MX#...TTTTT....#',
-    '#.............+..+...MX#...TTTTT....#',
+    '#.............+..+....X#...TTTTT....#',
+    '#.............+..+....X#...TTTTT....#',
     '#.............#..#....X#............#',
-    '#.............#..#KKKKK#............#',
-    '#.............#..#KKKKK#............#',
+    '#.............#..#MM...#............#',
+    '#.............#..#MMKKK#............#',
     '#.....TT......#..#######............#',
     '###############..#NNNNN#P...........#',
     '#.............R..+:::::#V.........SS#',
@@ -296,6 +296,16 @@ const CONFIG = {
      * sur les écrans à haute densité et de la place pour les détails.
      */
     tileSize: 32,
+
+    /**
+     * Taille minimale d'une case à l'écran, en pixels.
+     *
+     * Sur un grand écran, tout le plan est visible d'un coup. Sur un
+     * téléphone, l'afficher en entier donnerait des cases de 10 pixels :
+     * en dessous de cette valeur, le jeu zoome et la caméra suit le joueur.
+     * Augmente pour un zoom plus serré, diminue pour voir plus large.
+     */
+    minTileSize: 26,
 
     /**
      * Brouillard : les pièces restent masquées jusqu'à ce qu'on y entre,

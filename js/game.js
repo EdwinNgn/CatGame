@@ -27,11 +27,21 @@ const Game = {
     this.canvas = document.getElementById('game-canvas');
     this.ctx = this.canvas.getContext('2d');
 
-    Input.init(this.canvas);
+    Input.init(this.canvas, document.getElementById('touchpad'));
     UI.init({
       onStart: (setup) => this.start(setup),
       onReplay: () => this.reset()
     });
+
+    // Rotation de l'écran, redimensionnement de la fenêtre, apparition de la
+    // barre d'adresse mobile : on recadre à chaque fois.
+    let pending = 0;
+    const refit = () => {
+      cancelAnimationFrame(pending);
+      pending = requestAnimationFrame(() => this._fitCanvas());
+    };
+    window.addEventListener('resize', refit);
+    window.addEventListener('orientationchange', refit);
   },
 
   get steps() {
@@ -46,8 +56,6 @@ const Game = {
     this.world = new World();
 
     // Le plan tient en entier dans le cadre : pas de défilement.
-    this.canvas.width = this.world.width;
-    this.canvas.height = this.world.height;
     this.camera = { x: 0, y: 0, w: this.world.width, h: this.world.height };
 
     const colors = ['#d98a7b', '#6fa8c8'];
@@ -74,8 +82,121 @@ const Game = {
     UI.updateRooms(this.world.discovered.size, this.world.roomsTotal);
     this._syncObjective();
 
+    // Le cadrage vient APRÈS l'affichage et le remplissage du HUD : il faut
+    // que la mise en page soit calculée pour mesurer la place restante.
+    this._fitCanvas();
+    requestAnimationFrame(() => this._fitCanvas());
+
     cancelAnimationFrame(this._raf);
     this._loop(performance.now());
+  },
+
+  /**
+   * Adapte le canvas à la place disponible, et décide s'il faut afficher tout
+   * le plan ou seulement les environs du joueur.
+   *
+   * Le plan fait 1184x992, presque carré. Sur un écran étroit c'est la
+   * largeur qui contraint, pas la hauteur : tout afficher donnerait des cases
+   * de 10 pixels, illisibles. Quand la place manque, on garde donc une taille
+   * de case confortable (`world.minTileSize`) et la caméra suit le joueur.
+   * Sur grand écran, tout le plan reste visible d'un coup comme avant.
+   *
+   * Le contexte porte la mise à l'échelle, donc le code de rendu continue de
+   * travailler en coordonnées du plan.
+   */
+  _fitCanvas() {
+    if (!this.world) return;
+
+    const stage = document.getElementById('stage');
+    const rect = stage ? stage.getBoundingClientRect() : null;
+    const availW = (rect && rect.width) ? rect.width : window.innerWidth;
+    const availH = (rect && rect.height) ? rect.height : this._availableHeight();
+
+    // Échelle nécessaire pour montrer tout le plan.
+    const fullScale = Math.min(availW / this.world.width, availH / this.world.height);
+
+    // Échelle minimale pour que les cases restent lisibles.
+    const minTile = CONFIG.world.minTileSize || 22;
+    const minScale = minTile / this.world.tileSize;
+
+    // Si tout afficher rendrait les cases trop petites, on zoome et on suit
+    // le joueur. Sinon on montre le plan entier.
+    const scale = Math.max(fullScale, Math.min(minScale, 1));
+    this.followCamera = scale > fullScale + 0.0001;
+
+    // La vue ne dépasse jamais le plan : sinon on verrait des bandes vides
+    // sur les écrans larges, la carte ne remplissant pas le cadre.
+    const viewW = this.followCamera
+      ? Math.min(Math.floor(availW), Math.floor(this.world.width * scale))
+      : Math.floor(this.world.width * scale);
+    const viewH = this.followCamera
+      ? Math.min(Math.floor(availH), Math.floor(this.world.height * scale))
+      : Math.floor(this.world.height * scale);
+
+    // Résolution de dessin, limitée à 2x pour ménager les mobiles.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    this.canvas.style.width = viewW + 'px';
+    this.canvas.style.height = viewH + 'px';
+    this.canvas.width = Math.round(viewW * dpr);
+    this.canvas.height = Math.round(viewH * dpr);
+
+    this._scale = scale;
+    this._viewScale = scale * dpr;
+    this._dpr = dpr;
+
+    // Taille de la fenêtre de vue, en unités du plan.
+    this.camera.w = viewW / scale;
+    this.camera.h = viewH / scale;
+
+    this._updateCamera(true);
+  },
+
+  /**
+   * Recentre la vue sur les joueurs, sans jamais sortir du plan.
+   * @param {boolean} [immediate] sans lissage (au démarrage, au recadrage)
+   */
+  _updateCamera(immediate) {
+    if (!this.world) return;
+
+    // Vue plus grande que le plan : on centre et on n'y touche plus.
+    if (!this.followCamera) {
+      this.camera.x = (this.world.width - this.camera.w) / 2;
+      this.camera.y = (this.world.height - this.camera.h) / 2;
+      return;
+    }
+    if (!this.players.length) return;
+
+    const avgX = this.players.reduce((s, p) => s + p.x, 0) / this.players.length;
+    const avgY = this.players.reduce((s, p) => s + p.y, 0) / this.players.length;
+
+    const maxX = Math.max(0, this.world.width - this.camera.w);
+    const maxY = Math.max(0, this.world.height - this.camera.h);
+    const targetX = Math.max(0, Math.min(maxX, avgX - this.camera.w / 2));
+    const targetY = Math.max(0, Math.min(maxY, avgY - this.camera.h / 2));
+
+    if (immediate) {
+      this.camera.x = targetX;
+      this.camera.y = targetY;
+      return;
+    }
+
+    // Lissage : la caméra rattrape le joueur sans à-coups.
+    this.camera.x += (targetX - this.camera.x) * 0.14;
+    this.camera.y += (targetY - this.camera.y) * 0.14;
+  },
+
+  /** Hauteur disponible pour le plan, une fois le HUD et le pavé retirés. */
+  _availableHeight() {
+    const h = window.innerHeight;
+    const used = ['hud', 'touchpad', 'hint'].reduce((sum, id) => {
+      const el = document.getElementById(id);
+      if (!el || el.offsetParent === null) return sum;
+      const r = el.getBoundingClientRect();
+      return sum + r.height;
+    }, 0);
+    // 28px de marges cumulées (padding du body + espacements)
+    return Math.max(200, h - used - 28);
   },
 
   reset() {
@@ -142,6 +263,7 @@ const Game = {
     this._checkHungryCat();
     this._checkDoors();
     this._checkNurseryEntry();
+    this._updateCamera();
   },
 
   /**
@@ -318,9 +440,20 @@ const Game = {
 
   _draw(time) {
     const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const cam = { x: 0, y: 0, w: this.camera.w, h: this.camera.h };
+    // Repère : mise à l'échelle, puis translation selon la caméra. Tout le
+    // rendu reste ainsi exprimé en coordonnées du plan.
+    const k = this._viewScale || 1;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.clearRect(0, 0, this.camera.w + 2, this.camera.h + 2);
+
+    const cam = {
+      x: Math.round(this.camera.x * k) / k,
+      y: Math.round(this.camera.y * k) / k,
+      w: this.camera.w,
+      h: this.camera.h
+    };
+
     this.world.draw(ctx, cam, time);
 
     [...this.players]
@@ -341,7 +474,7 @@ const Game = {
     // Le voile passe après les joueurs : on ne les voit pas à travers un mur.
     this.world.drawFog(ctx, cam);
 
-    Input.drawTouchStick(ctx, this.canvas);
+    Input.drawTouchStick(ctx, this.canvas, this._viewScale);
   }
 };
 

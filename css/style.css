@@ -19,23 +19,39 @@
 
 html, body {
   margin: 0;
-  height: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font);
   overscroll-behavior: none;
 }
 
+/* `100dvh` suit la hauteur réellement visible sur mobile, barre d'adresse
+   comprise, là où `100vh` déborde sous elle. */
+html { height: 100%; }
+
 body {
+  min-height: 100%;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 10px;
 }
 
 #app { width: 100%; max-width: 980px; }
 
-body { min-height: 100%; }
+/* Pendant une partie, la page occupe toute la hauteur disponible pour que la
+   carte soit aussi grande que possible. */
+body.is-playing {
+  align-items: stretch;
+  padding: 8px;
+}
+
+body.is-playing #app {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
 /* ---------- Écrans ---------- */
 .screen { display: none; }
@@ -188,28 +204,33 @@ body { min-height: 100%; }
 /* ---------- Jeu ---------- */
 #screen-game { position: relative; }
 
-/* Enveloppe collée à la taille réelle du canvas, pour que le HUD et le
-   bandeau restent alignés sur le plan et non sur la fenêtre. */
-#stage {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
+/* Colonne : HUD en haut, carte au milieu (elle prend la place restante),
+   pavé tactile et indice en bas. */
+#screen-game.is-visible {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  text-align: center;
+  gap: 8px;
 }
 
-#screen-game.is-visible { text-align: center; }
+#stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-/* Le plan est plus haut que large : on le borne aussi en hauteur pour qu'il
-   tienne dans la fenêtre sans défilement. */
+/* La taille est fixée en JavaScript d'après la place disponible : le canvas
+   est dimensionné à la résolution de l'écran pour rester net. */
 #game-canvas {
   display: block;
-  margin: 0 auto;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 82vh;
   background: #1b2b25;
-  border-radius: var(--radius);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   touch-action: none;
 }
 
@@ -255,19 +276,26 @@ body { min-height: 100%; }
   color: var(--accent-dark);
 }
 
+/* Bandeau d'objectif, au-dessus de la carte. Il faisait auparavant un encart
+   flottant dans le coin, qui masquait une partie du plan. */
 #hud {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  padding: 10px 14px;
-  background: rgba(251, 246, 236, 0.92);
+  flex: none;
+  padding: 8px 14px;
+  background: rgba(251, 246, 236, 0.95);
   border-radius: 12px;
   pointer-events: none;
-  max-width: 60%;
+  text-align: left;
+}
+
+.hud-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .hud-counter {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -276,16 +304,16 @@ body { min-height: 100%; }
 
 /* L'objectif courant de la chaîne de quêtes. */
 .hud-objective {
-  margin-top: 4px;
-  font-size: 14px;
+  margin-top: 2px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--ink);
 }
 
 /* Ce que le joueur a dans les mains. */
 .hud-carry {
-  margin-top: 6px;
+  margin-top: 4px;
   font-family: var(--emoji);
   font-size: 12px;
   font-weight: 600;
@@ -295,19 +323,55 @@ body { min-height: 100%; }
 .hud-carry:empty { display: none; }
 
 .hud-rooms {
-  margin-top: 7px;
   font-size: 11px;
   font-weight: 600;
   color: var(--ink-soft);
+  white-space: nowrap;
 }
 
 .hud-rooms:empty { display: none; }
 
+/* ---------- Pavé tactile sous la carte ---------- */
+
+#touchpad {
+  flex: none;
+  display: none;              /* affiché seulement sur écran tactile */
+  align-items: center;
+  justify-content: center;
+  height: 92px;
+  background: rgba(251, 246, 236, 0.1);
+  border: 2px dashed rgba(251, 246, 236, 0.28);
+  border-radius: 14px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#touchpad:active {
+  background: rgba(251, 246, 236, 0.18);
+  border-color: rgba(251, 246, 236, 0.45);
+}
+
+.touchpad-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(207, 227, 214, 0.75);
+  pointer-events: none;
+}
+
+/* Le pavé n'a de sens qu'au doigt : on l'affiche sur les appareils sans
+   souris, et on le masque sur ordinateur où le clavier suffit. */
+@media (hover: none) and (pointer: coarse) {
+  body.is-playing #touchpad { display: flex; }
+}
+
 .hint {
-  margin: 10px 0 0;
-  min-height: 1.4em;
+  flex: none;
+  margin: 0;
+  min-height: 1.3em;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.35;
   color: #cfe3d6;
 }
 
@@ -392,8 +456,21 @@ body { min-height: 100%; }
 @media (max-width: 560px) {
   .panel { padding: 22px 18px; }
   .title { font-size: 23px; }
-  #hud { top: 8px; left: 8px; padding: 8px 10px; max-width: 68%; }
+  #hud { padding: 7px 11px; }
+  .hud-objective { font-size: 13.5px; }
+  #touchpad { height: 80px; }
+  .hint { font-size: 12px; }
+}
+
+/* Paysage sur mobile : la hauteur est rare, on comprime les bords. */
+@media (max-height: 520px) {
+  body.is-playing { padding: 5px; }
+  #screen-game.is-visible { gap: 5px; }
+  #hud { padding: 5px 10px; }
   .hud-objective { font-size: 12.5px; }
+  .hud-carry, .hud-rooms { display: none; }
+  #touchpad { height: 58px; }
+  .touchpad-label { font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

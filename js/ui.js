@@ -114,6 +114,8 @@ const UI = {
   showGame() {
     this.el.menu.classList.remove('is-visible');
     this.el.game.classList.add('is-visible');
+    // Bascule la page en pleine hauteur et fait apparaître le pavé tactile.
+    document.body.classList.add('is-playing');
   },
 
   showMenu() {
@@ -121,6 +123,7 @@ const UI = {
     this.el.menu.classList.add('is-visible');
     this.el.final.classList.remove('is-visible');
     this.el.modal.classList.remove('is-visible');
+    document.body.classList.remove('is-playing');
     this.stopConfetti();
   },
 

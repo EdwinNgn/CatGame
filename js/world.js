@@ -1119,15 +1119,28 @@ class World {
     ctx.fill();
   }
 
-  /** Plan figé + cadeaux animés par-dessus. */
+  /** Plan figé + objets animés par-dessus. */
   draw(ctx, camera, time) {
     if (!this.staticLayer) this.prerender();
 
-    ctx.drawImage(
-      this.staticLayer,
-      camera.x, camera.y, camera.w, camera.h,
-      0, 0, camera.w, camera.h
-    );
+    /*
+     * La zone source est bornée au plan : quand la vue est plus grande que
+     * l'appartement (grand écran) ou que la caméra frôle un bord, demander
+     * des pixels hors de la couche ferait échouer le tracé. On dessine donc
+     * l'intersection, à sa place exacte dans la vue.
+     */
+    const sx = Math.max(0, camera.x);
+    const sy = Math.max(0, camera.y);
+    const sw = Math.min(this.width - sx, camera.w - (sx - camera.x));
+    const sh = Math.min(this.height - sy, camera.h - (sy - camera.y));
+
+    if (sw > 0 && sh > 0) {
+      ctx.drawImage(
+        this.staticLayer,
+        sx, sy, sw, sh,
+        sx - camera.x, sy - camera.y, sw, sh
+      );
+    }
 
     // Objets à ramasser, uniquement dans les pièces déjà visitées.
     Object.values(this.things).forEach((thing, i) => {

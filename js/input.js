@@ -1,14 +1,24 @@
 /**
  * Entrées : clavier pour un ou deux joueurs, tactile via joystick virtuel.
  * Le joystick pilote toujours le joueur 1.
+ *
+ * Deux surfaces tactiles sont acceptées : la carte elle-même, et un pavé
+ * sous la carte. Ce pavé permet de garder le pouce en bas de l'écran sans
+ * masquer le plan avec la main.
  */
 const Input = {
   keys: new Set(),
-  touch: { active: false, dx: 0, dy: 0, originX: 0, originY: 0 },
+  touch: { active: false, dx: 0, dy: 0, originX: 0, originY: 0, onPad: false },
   _canvas: null,
+  _pad: null,
 
-  init(canvas) {
+  /**
+   * @param {HTMLCanvasElement} canvas la carte
+   * @param {HTMLElement} [pad] zone tactile sous la carte (facultative)
+   */
+  init(canvas, pad) {
     this._canvas = canvas;
+    this._pad = pad || null;
 
     window.addEventListener('keydown', (e) => {
       // Ne pas voler les touches quand on tape un prénom.
@@ -23,20 +33,25 @@ const Input = {
 
     window.addEventListener('blur', () => this.keys.clear());
 
-    canvas.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: false });
-    canvas.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
-    canvas.addEventListener('touchend', () => this._resetTouch());
-    canvas.addEventListener('touchcancel', () => this._resetTouch());
+    [canvas, this._pad].forEach((el) => {
+      if (!el) return;
+      const onPad = (el === this._pad);
+      el.addEventListener('touchstart', (e) => this._onTouchStart(e, onPad), { passive: false });
+      el.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
+      el.addEventListener('touchend', () => this._resetTouch());
+      el.addEventListener('touchcancel', () => this._resetTouch());
+    });
   },
 
   _isGameKey(key) {
     return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key);
   },
 
-  _onTouchStart(e) {
+  _onTouchStart(e, onPad) {
     e.preventDefault();
     const t = e.touches[0];
     this.touch.active = true;
+    this.touch.onPad = !!onPad;
     this.touch.originX = t.clientX;
     this.touch.originY = t.clientY;
     this.touch.dx = 0;
@@ -54,6 +69,7 @@ const Input = {
 
   _resetTouch() {
     this.touch.active = false;
+    this.touch.onPad = false;
     this.touch.dx = 0;
     this.touch.dy = 0;
   },
@@ -93,29 +109,34 @@ const Input = {
   },
 
   /**
-   * Dessine le joystick virtuel quand un doigt est posé.
-   * Le canvas peut être mis à l'échelle par la largeur OU par la hauteur :
-   * on calcule donc les deux facteurs séparément.
+   * Dessine le joystick sur la carte quand le doigt est posé dessus.
+   *
+   * Rien n'est dessiné si le doigt est sur le pavé du bas : celui-ci a son
+   * propre repère visuel en CSS, et le canvas n'y a pas accès.
+   *
+   * @param {number} viewScale rapport pixels de dessin / unités du plan
    */
-  drawTouchStick(ctx, canvas) {
-    if (!this.touch.active) return;
+  drawTouchStick(ctx, canvas, viewScale) {
+    if (!this.touch.active || this.touch.onPad) return;
+
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
 
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const cx = (this.touch.originX - rect.left) * scaleX;
-    const cy = (this.touch.originY - rect.top) * scaleY;
+    // Le contexte est déjà mis à l'échelle : on convertit les pixels écran
+    // en unités du plan pour rester cohérent avec le reste du rendu.
+    const k = (canvas.width / rect.width) / (viewScale || 1);
+    const cx = (this.touch.originX - rect.left) * k;
+    const cy = (this.touch.originY - rect.top) * k;
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2 * k;
     ctx.beginPath();
-    ctx.arc(cx, cy, 44 * scaleX, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 44 * k, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.beginPath();
-    ctx.arc(cx + this.touch.dx * scaleX, cy + this.touch.dy * scaleY, 17 * scaleX, 0, Math.PI * 2);
+    ctx.arc(cx + this.touch.dx * k, cy + this.touch.dy * k, 17 * k, 0, Math.PI * 2);
     ctx.fill();
   }
 };

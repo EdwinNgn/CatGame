@@ -46,17 +46,26 @@
 
     <!-- Jeu -->
     <section id="screen-game" class="screen">
-      <div id="stage">
-          <canvas id="game-canvas" width="1184" height="992" aria-label="Plan de l'appartement"></canvas>
-
-        <div id="hud">
-          <div id="hud-step" class="hud-counter"></div>
-          <div id="hud-objective" class="hud-objective"></div>
-          <div id="hud-carry" class="hud-carry"></div>
-          <div id="hud-rooms" class="hud-rooms"></div>
+      <!-- Le HUD est au-dessus du plan, dans l'espace libre : il ne
+           recouvre plus la carte comme le faisait l'ancien encart. -->
+      <div id="hud">
+        <div class="hud-line">
+          <span id="hud-step" class="hud-counter"></span>
+          <span id="hud-rooms" class="hud-rooms"></span>
         </div>
+        <div id="hud-objective" class="hud-objective"></div>
+        <div id="hud-carry" class="hud-carry"></div>
+      </div>
 
+      <div id="stage">
+        <canvas id="game-canvas" aria-label="Plan de l'appartement"></canvas>
         <div id="toast" class="toast" aria-live="polite"></div>
+      </div>
+
+      <!-- Zone tactile sous la carte : on peut y poser le pouce pour
+           diriger le personnage sans masquer le plan avec sa main. -->
+      <div id="touchpad" aria-hidden="true">
+        <span class="touchpad-label">Glissez le doigt ici pour vous déplacer</span>
       </div>
 
       <p id="hint" class="hint" aria-live="polite"></p>

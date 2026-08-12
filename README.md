@@ -128,7 +128,8 @@ console si la partie est insoluble :
 | `quest.steps` | Les 8 étapes : objectif affiché, indice, message de porte fermée, et la carte qui s'ouvre à la réussite. Ne change pas les `id`. |
 | `cat` | Le nom et les couleurs du chat. |
 | `reveal` | L'annonce affichée près du landau : titre, texte, date (`date: ''` pour masquer) et le libellé des deux boutons (`okButton`, `replayButton`). |
-| `world.tileSize` | Taille d'une case en pixels. |
+| `world.tileSize` | Taille d'une case en pixels dans le plan. |
+| `world.minTileSize` | Taille minimale d'une case à l'écran. En dessous, le jeu zoome et la caméra suit le joueur au lieu de tout afficher. Augmente pour un zoom plus serré. |
 | `world.fog` | `true` : les pièces restent masquées jusqu'à ce qu'on y entre. |
 | `player.speed` | Vitesse de déplacement. |
 
@@ -136,8 +137,20 @@ console si la partie est insoluble :
 
 - Joueur 1 : flèches du clavier
 - Joueur 2 : Z Q S D (mode deux joueurs sur le même écran)
-- Mobile : glissez le doigt n'importe où sur le plan
+- Mobile : glissez le doigt sur le plan, ou sur le pavé sous la carte pour
+  garder le pouce en bas sans masquer la vue
 - Entrée ou Espace pour fermer une carte
+
+## Affichage
+
+Sur grand écran, tout l'appartement est visible d'un coup. Sur mobile,
+l'afficher en entier donnerait des cases de 10 pixels : le jeu zoome alors
+pour garder des cases lisibles (26 px par défaut) et la caméra suit le joueur,
+sans jamais sortir du plan. Le seuil se règle avec `world.minTileSize`.
+
+La mise en page est recalculée à la rotation de l'écran et au
+redimensionnement de la fenêtre, et le canvas est dessiné à la résolution de
+l'appareil pour rester net sur les écrans haute densité.
 
 ## Structure
 
