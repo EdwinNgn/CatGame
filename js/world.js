@@ -662,36 +662,55 @@ class World {
     ctx.stroke();
 
     /*
-     * Trois zones nettes le long du landau, du plus lisible au plus discret :
-     * capote à gauche, nacelle blanche au milieu (où l'on voit le bébé),
-     * couverture à droite. Les proportions comptent : une capote trop large
-     * mangeait la nacelle et le tout devenait illisible.
+     * Les trois zones s'enchaînent comme dans un vrai landau, de la tête aux
+     * pieds : la capote coiffe la tête à gauche, la couverture part de la
+     * poitrine et couvre tout le reste vers la droite.
+     *
+     * La version précédente plaçait la tête au centre, la capote abritant du
+     * vide à côté d'elle : vu de dessus, on ne comprenait plus ce qu'on
+     * regardait. La tête doit être SOUS la capote.
      */
+    const headX = cx - w * 0.2;   // tête, au tiers gauche
+    const br = size * 0.1;        // rayon de la tête
+
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(cx, cy, w * 0.42, h * 0.42, 0, 0, Math.PI * 2);
     ctx.clip();
 
-    // Capote : le quart gauche seulement
+    // Capote : coiffe la tête, depuis le bord gauche
     ctx.fillStyle = '#8fb9cf';
     ctx.beginPath();
-    ctx.ellipse(cx - w * 0.3, cy, w * 0.2, h * 0.44, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - w * 0.34, cy, w * 0.17, h * 0.44, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = Math.max(1, size * 0.018);
     ctx.beginPath();
-    ctx.ellipse(cx - w * 0.3, cy, w * 0.12, h * 0.3, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx - w * 0.34, cy, w * 0.1, h * 0.29, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Couverture : le tiers droit
+    // Couverture : commence juste après la tête et va jusqu'aux pieds
+    const blanketX = headX + br * 1.15;
     ctx.fillStyle = '#f7ccd6';
-    ctx.fillRect(cx + w * 0.1, cy - h * 0.45, w * 0.34, h * 0.9);
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = Math.max(1.2, size * 0.022);
+    ctx.fillRect(blanketX, cy - h * 0.45, cx + w * 0.45 - blanketX, h * 0.9);
+
+    // Bord replié de la couverture, au niveau de la poitrine
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = Math.max(1.2, size * 0.024);
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.1, cy - h * 0.45);
-    ctx.lineTo(cx + w * 0.1, cy + h * 0.45);
+    ctx.moveTo(blanketX, cy - h * 0.45);
+    ctx.lineTo(blanketX, cy + h * 0.45);
     ctx.stroke();
+
+    // Deux plis dans la longueur, pour ne pas laisser un aplat de rose
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = Math.max(1, size * 0.016);
+    [0.14, 0.3].forEach((o) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + w * o, cy - h * 0.35);
+      ctx.lineTo(cx + w * o, cy + h * 0.35);
+      ctx.stroke();
+    });
     ctx.restore();
 
     // Poignée, au pied du landau
@@ -701,10 +720,9 @@ class World {
     ctx.arc(cx + w * 0.44, cy, h * 0.2, Math.PI * 1.6, Math.PI * 0.4);
     ctx.stroke();
 
-    // Le bébé, dans la nacelle blanche juste devant la capote
-    const bx = cx - w * 0.06;
+    // La tête du bébé, sous la capote
+    const bx = headX;
     const by = cy;
-    const br = size * 0.1;
 
     ctx.fillStyle = '#f6d9c0';
     ctx.beginPath();
@@ -728,11 +746,11 @@ class World {
       ctx.fill();
     });
 
-    // Mèche de cheveux, côté capote
+    // Mèche de cheveux, du côté de la capote
     ctx.strokeStyle = '#8a6a4d';
     ctx.lineWidth = Math.max(1, size * 0.026);
     ctx.beginPath();
-    ctx.arc(bx - br * 0.8, by, br * 0.3, Math.PI * 1.4, Math.PI * 0.6);
+    ctx.arc(bx - br * 0.75, by, br * 0.32, Math.PI * 1.4, Math.PI * 0.6);
     ctx.stroke();
   }
 
