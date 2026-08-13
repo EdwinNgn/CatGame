@@ -181,8 +181,9 @@ les valeurs, et ajoute son libellé dans `_buildLangSwitch` (`js/ui.js`).
 
 - Joueur 1 : flèches du clavier
 - Joueur 2 : Z Q S D (mode deux joueurs sur le même écran)
-- À deux, l'objet ramassé reste sur celui qui l'a pris, et la dernière porte
-  ne s'ouvre que si les deux joueurs sont devant
+- À deux, l'objet ramassé s'affiche sur les deux joueurs (l'inventaire est
+  commun), Tsuki suit celui qui l'a attrapé, et la dernière porte ne s'ouvre
+  que si les deux joueurs sont devant
 - Mobile : glissez le doigt sur le plan, ou sur le pavé sous la carte pour
   garder le pouce en bas sans masquer la vue
 - Entrée ou Espace pour fermer une carte

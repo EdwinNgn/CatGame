@@ -20,11 +20,11 @@ const Game = {
   stepIndex: 0,
   carrying: null,
   /**
-   * Index du joueur qui porte l'objet courant.
+   * Index du joueur que Tsuki suit physiquement.
    *
-   * Sans lui, le jeu ne savait pas QUI portait quoi : le chat suivait
-   * toujours le joueur 1, et l'icone de l'objet s'affichait sur les deux
-   * joueurs a la fois.
+   * Sans lui, le chat restait collé au joueur 1 même si c'était l'autre qui
+   * l'avait attrapé. Le médaillon de l'objet, lui, s'affiche sur les deux
+   * joueurs : l'inventaire est commun à l'équipe.
    */
   carrierIndex: 0,
   revealed: false,
@@ -570,15 +570,16 @@ const Game = {
 
     this.world.draw(ctx, cam, time);
 
-    // Trie par profondeur, en gardant l'index d'origine pour savoir qui
-    // porte l'objet.
-    this.players
-      .map((p, i) => ({ p, i }))
-      .sort((a, b) => a.p.y - b.p.y)
-      .forEach(({ p, i }) => {
-        const held = (i === this.carrierIndex) ? this.carrying : null;
-        p.draw(ctx, cam, held);
-      });
+    /*
+     * L'objet porté est affiché sur TOUS les joueurs : à deux, l'inventaire
+     * est commun, et chacun doit voir ce que l'équipe a en main sans avoir à
+     * regarder l'autre personnage.
+     *
+     * `carrierIndex` ne sert donc qu'à savoir qui Tsuki suit physiquement.
+     */
+    [...this.players]
+      .sort((a, b) => a.y - b.y)
+      .forEach((p) => p.draw(ctx, cam, this.carrying));
 
     // Tsuki porté : dessiné au-dessus du joueur.
     if (this.carrying === 'cat') {
