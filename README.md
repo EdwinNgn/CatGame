@@ -145,6 +145,24 @@ console si la partie est insoluble :
 - la chambre marquée `nursery` ne doit pas avoir de seconde entrée qui
   contournerait la porte `R`.
 
+## Les langues
+
+Le jeu est en français par défaut, avec un choix français / anglais sur
+l'écran d'accueil. Le choix est mémorisé d'une partie à l'autre.
+
+Tous les textes visibles sont dans `js/i18n.js`, regroupés par langue. Pour en
+modifier un, édite les deux langues : les clés doivent rester identiques, et le
+jeu retombe sur le français si une clé manque en anglais.
+
+Point important : les pièces ont un `id` interne (`bedroom`, `laundry`…) qui
+sert de clé pour les zones de brouillard et pour `blackout.keepLitRooms`, et
+n'est jamais affiché. Le nom visible vient de `I18N.<langue>.rooms.<id>`. Ne
+change pas les `id`, ni ceux des étapes de quête qui servent aussi de clés de
+traduction.
+
+Pour ajouter une langue, copie un bloc de `I18N` sous un nouveau code, traduis
+les valeurs, et ajoute son libellé dans `_buildLangSwitch` (`js/ui.js`).
+
 ## Le reste de la configuration
 
 | Clé | Rôle |
@@ -198,7 +216,8 @@ canvas n'hérite pas des polices de la page.
 index.html          écrans et overlays
 css/style.css       styles
 js/emoji.js         pile de polices emoji pour le canvas
-js/config.js        le plan, la chaîne de quêtes, les textes, les icônes
+js/i18n.js          tous les textes, en français et en anglais
+js/config.js        le plan, la chaîne de quêtes, les icônes, les réglages
 js/worldgen.js      lecture du plan, meubles, zones de brouillard, contrôles
 js/world.js         collisions, serrures, objets, Tsuki, rendu
 js/player.js        personnage et déplacement

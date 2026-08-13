@@ -11,24 +11,29 @@
     <!-- Écran d'accueil -->
     <section id="screen-menu" class="screen is-visible">
       <div class="panel">
-        <h1 class="title">Une clé, un poisson, un chat</h1>
-        <p class="subtitle">Deux portes fermées, un chat qui ne se laisse pas
-          porter, et un secret au fond du couloir. Suivez les étapes,
-          elles vous mèneront jusque-là.</p>
+        <h1 class="title" id="menu-title">Une clé, un poisson, un chat</h1>
+        <p class="subtitle" id="menu-subtitle">Deux portes fermées, un chat qui
+          ne se laisse pas porter, et un secret au fond du couloir.</p>
+
+        <!-- Choix de la langue : français par défaut. -->
+        <div class="lang-row">
+          <span class="lang-title" id="lang-label">Langue</span>
+          <div id="lang-switch" class="lang-switch" role="group"></div>
+        </div>
 
         <div class="field">
-          <label for="p1-name">Joueur 1</label>
+          <label for="p1-name" id="p1-label">Joueur 1</label>
           <input id="p1-name" type="text" maxlength="12" placeholder="Prénom" autocomplete="off">
           <div class="avatars" id="p1-avatars" role="radiogroup" aria-label="Avatar du joueur 1"></div>
         </div>
 
         <label class="checkbox">
           <input id="two-players" type="checkbox">
-          <span>Jouer à deux sur le même écran</span>
+          <span id="two-players-label">Jouer à deux sur le même écran</span>
         </label>
 
         <div class="field is-hidden" id="p2-field">
-          <label for="p2-name">Joueur 2</label>
+          <label for="p2-name" id="p2-label">Joueur 2</label>
           <input id="p2-name" type="text" maxlength="12" placeholder="Prénom" autocomplete="off">
           <div class="avatars" id="p2-avatars" role="radiogroup" aria-label="Avatar du joueur 2"></div>
         </div>
@@ -36,10 +41,10 @@
         <button id="btn-start" class="btn btn-primary" type="button">Commencer l'exploration</button>
 
         <ul class="controls-help">
-          <li><b>Joueur 1</b> : flèches du clavier</li>
-          <li><b>Joueur 2</b> : Z Q S D</li>
-          <li><b>Mobile</b> : glissez le doigt sur l'écran</li>
-          <li>Marchez sur un objet pour le prendre</li>
+          <li id="help-1"><b>Joueur 1</b> : flèches du clavier</li>
+          <li id="help-2"><b>Joueur 2</b> : Z Q S D</li>
+          <li id="help-3"><b>Mobile</b> : glissez le doigt sur l'écran</li>
+          <li id="help-4">Marchez sur un objet pour le prendre</li>
         </ul>
       </div>
     </section>
@@ -65,7 +70,7 @@
       <!-- Zone tactile sous la carte : on peut y poser le pouce pour
            diriger le personnage sans masquer le plan avec sa main. -->
       <div id="touchpad" aria-hidden="true">
-        <span class="touchpad-label">Glissez le doigt ici pour vous déplacer</span>
+        <span class="touchpad-label" id="touchpad-label">Glissez le doigt ici pour vous déplacer</span>
       </div>
 
       <p id="hint" class="hint" aria-live="polite"></p>
@@ -99,6 +104,7 @@
   </div>
 
   <script src="js/emoji.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/config.js"></script>
   <script src="js/worldgen.js"></script>
   <script src="js/world.js"></script>

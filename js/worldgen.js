@@ -294,7 +294,7 @@ const WorldGen = {
           cells.push(cur);
 
           const owner = roomAt(cur.col, cur.row);
-          if (owner) votes.set(owner.name, (votes.get(owner.name) || 0) + 1);
+          if (owner) votes.set(owner.id, (votes.get(owner.id) || 0) + 1);
 
           const around = [
             { col: cur.col + 1, row: cur.row },
@@ -312,11 +312,11 @@ const WorldGen = {
         }
 
         // Quelles pièces déclarées touchent cette zone ?
-        const involved = rooms.filter((room) => votes.has(room.name));
+        const involved = rooms.filter((room) => votes.has(room.id));
         if (!involved.length) continue; // aucun nom déclaré : jamais masqué
 
         if (involved.length === 1) {
-          const name = involved[0].name;
+          const name = involved[0].id;
           zones[name] = (zones[name] || []).concat(cells);
           continue;
         }
@@ -340,8 +340,8 @@ const WorldGen = {
           });
 
           if (bestRoom) {
-            zones[bestRoom.name] = (zones[bestRoom.name] || []);
-            zones[bestRoom.name].push(cell);
+            zones[bestRoom.id] = (zones[bestRoom.id] || []);
+            zones[bestRoom.id].push(cell);
           }
         });
       }
@@ -350,9 +350,9 @@ const WorldGen = {
     // Prévient si une pièce déclarée n'a aucune case : le voile ne la
     // couvrirait pas et le jeu ne la détecterait jamais comme visitée.
     rooms.forEach((room) => {
-      if (!zones[room.name] || !zones[room.name].length) {
+      if (!zones[room.id] || !zones[room.id].length) {
         map.warnings.push(
-          `La pièce « ${room.name} » ne contient aucune case close. ` +
+          `La pièce « ${room.id} » ne contient aucune case close. ` +
           'Vérifie ses coordonnées : le brouillard ne pourra pas la masquer.'
         );
       }

@@ -118,167 +118,78 @@ const CONFIG = {
    *   tsukiRoom: true                c'est là qu'il faut déposer Tsuki
    *   nursery: true                  la pièce surprise, jamais nommée avant
    */
+  /*
+   * `id` est l'identifiant interne, jamais affiché : il sert de clé pour les
+   * zones de brouillard et pour `blackout.keepLitRooms`. Ne le change pas.
+   * Le nom visible vient de `I18N.<langue>.rooms.<id>` (js/i18n.js).
+   */
   rooms: [
     {
       // Étiquette remontée entre le lit et les fauteuils, sur du parquet libre.
-      name: 'Notre chambre', locked: 'bedroom',
+      id: 'bedroom', locked: 'bedroom',
       col: 1, row: 1, w: 13, h: 11, label: { col: 7.5, row: 9.5 }
     },
     {
       // Centrée dans la pièce, entre les bureaux et les arbres à chat.
-      name: 'Chambre de Tsuki / Bureau', tsukiRoom: true,
+      id: 'study', tsukiRoom: true,
       col: 1, row: 13, w: 13, h: 9, label: { col: 7.5, row: 17.5 }
     },
     {
       // Descendue sous le tapis du bébé, qui masquait le nom au centre.
-      name: 'Chambre du bébé', nursery: true, locked: 'nursery',
-      hiddenName: 'Une porte fermée',
-      revealedName: 'Chambre du bébé',
+      id: 'nursery', nursery: true, locked: 'nursery',
       col: 1, row: 23, w: 13, h: 7, label: { col: 7.5, row: 29.5 }
     },
-    { name: 'Entrée',        col: 15, row: 8,  w: 6,  h: 7,  label: { col: 18,   row: 10.5 } },
+    { id: 'entrance', col: 15, row: 8,  w: 6,  h: 7,  label: { col: 18,   row: 10.5 } },
     // Centrée sur la bande de carrelage libre, sous les plans de travail.
-    { name: 'Cuisine',       col: 22, row: 7,  w: 14, h: 5,  label: { col: 30,   row: 9.5 } },
-    { name: 'Salon',         col: 24, row: 13, w: 12, h: 17, label: { col: 30,   row: 21 } },
+    { id: 'kitchen',  col: 22, row: 7,  w: 14, h: 5,  label: { col: 30,   row: 9.5 } },
+    { id: 'living',   col: 24, row: 13, w: 12, h: 17, label: { col: 30,   row: 21 } },
     // Centrée dans la pièce, au-dessus de la machine à laver.
-    { name: 'Buanderie',     col: 18, row: 16, w: 5,  h: 6,  label: { col: 20.5, row: 18.5 } },
+    { id: 'laundry',  col: 18, row: 16, w: 5,  h: 6,  label: { col: 20.5, row: 18.5 } },
     // Remontée sur le carrelage libre, au-dessus des vasques.
-    { name: 'Salle de bain', col: 18, row: 23, w: 5,  h: 7,  label: { col: 20.5, row: 24.5 } },
-    { name: 'WC',            col: 15, row: 26, w: 2,  h: 4,  label: { col: 16,   row: 28 } }
+    { id: 'bathroom', col: 18, row: 23, w: 5,  h: 7,  label: { col: 20.5, row: 24.5 } },
+    { id: 'wc',       col: 15, row: 26, w: 2,  h: 4,  label: { col: 16,   row: 28 } }
   ],
 
   /**
    * Le chat de la maison.
    *
-   * `hungryHint` s'affiche quand on le croise les mains vides : il a faim,
-   * mais on n'a rien à lui donner.
-   *
    * `movesTo` est la case où il part se cacher dès qu'on met la main sur le
    * poisson : il file à la salle de bain, et il faut aller le chercher.
    * Mets `movesTo: null` pour qu'il reste en cuisine.
+   *
+   * Ses textes sont dans `I18N.<langue>.cat` (js/i18n.js).
    */
   cat: {
     name: 'Tsuki',
     fur: '#4f4a46',
     belly: '#e8e2d8',
-    hungryHint: 'Tsuki miaule, il semble avoir faim.',
     movesTo: { col: 20, row: 24 },
-    movedCard: {
-      icon: ICONS.paw,
-      title: 'Plus personne en cuisine',
-      text: 'Tsuki a filé! ' +
-            'Il ne doit pas être bien loin.'
-    }
+    movedIcon: ICONS.paw
   },
 
   /**
    * ------------------------------------------------------------------
    *  LA CHAÎNE DE QUÊTES
    * ------------------------------------------------------------------
-   * Les étapes s'enchaînent dans cet ordre. Chaque étape affiche son
-   * `objective` dans le HUD et son `hint` sous le plan. `card` est la
-   * fenêtre qui s'ouvre quand l'étape est franchie.
+   * Les etapes s'enchainent dans cet ordre. Ne change pas les `id` : le code
+   * s'appuie dessus, et ce sont aussi les cles des textes.
    *
-   * Ne change pas les `id` : le code s'appuie dessus.
+   * Les libelles (objectif, indice, message de porte fermee, carte) sont
+   * dans `I18N.<langue>.steps.<id>` (js/i18n.js). Ici on ne garde que la
+   * structure et l'icone de chaque carte ; une etape sans `icon` n'ouvre
+   * pas de carte.
    */
   quest: {
     steps: [
-      {
-        /**
-         * Ouverture dans le noir : les plombs ont sauté. On ne voit qu'un
-         * halo autour de soi, et l'éclair ⚡ du tableau électrique reste
-         * visible malgré l'obscurité pour ne pas chercher trop longtemps.
-         */
-        id: 'power-on',
-        objective: 'Remettre l\'électricité',
-        hint: 'Les plombs ont sauté. Le tableau électrique est dans la buanderie.',
-        card: {
-          icon: '\u{26A1}',
-          title: 'La lumière revient',
-          text: 'Un coup sur le disjoncteur et l\'appartement se rallume. ' +
-                'Bien. Maintenant, au travail.'
-        }
-      },
-      {
-        id: 'find-key',
-        objective: 'Trouver la clé de notre chambre',
-        hint: 'Notre chambre est fermée. La clé traîne quelque part dans le salon.',
-        toast: 'Clé trouvée',
-        card: {
-          icon: ICONS.key,
-          title: 'Une petite clé',
-          text: 'Oubliée sous un coussin du canapé. C\'est celle de notre chambre, ' +
-                'aucun doute.'
-        }
-      },
-      {
-        id: 'open-bedroom',
-        objective: 'Ouvrir notre chambre',
-        hint: 'La clé en main, direction la porte de notre chambre.',
-        locked: 'Fermée à clé. La clé doit être quelque part dans le salon.',
-        card: {
-          icon: ICONS.door,
-          title: 'La porte s\'ouvre',
-          text: 'Un tour de clé, et notre chambre s\'ouvre. Quelque chose brille ' +
-                'près du lit.'
-        }
-      },
-      {
-        id: 'take-fish',
-        objective: 'Récupérer le poisson',
-        hint: 'Il y a quelque chose près du lit, dans notre chambre.',
-        toast: 'Poisson récupéré',
-        card: {
-          icon: ICONS.fish,
-          title: 'Un poisson',
-          text: 'Emballé, encore frais. Ce n\'est pas pour nous : ' +
-                'quelqu\'un dans cette maison en raffole.'
-        }
-      },
-      {
-        id: 'feed-tsuki',
-        objective: 'Retrouver Tsuki et lui donner le poisson',
-        hint: 'Tsuki a quitté la cuisine. Il se cache quelque part dans l\'appartement.',
-        card: {
-          icon: ICONS.fish,
-          title: 'Tsuki est conquis',
-          text: 'Il engloutit le poisson en trois bouchées, se frotte contre ' +
-                'vos jambes et se laisse enfin porter. Le ventre plein, il est ' +
-                'maintenant l\'heure de la sieste : amenez-le dans sa chambre.'
-        }
-      },
-      {
-        id: 'bring-tsuki',
-        objective: 'Porter Tsuki jusqu\'à sa chambre',
-        hint: 'Tsuki est dans vos bras. Sa chambre est la deuxième porte à gauche.',
-        card: {
-          icon: ICONS.cat,
-          title: 'Tsuki rentre chez lui',
-          text: 'Il se love dans son panier, s\'étire… et pousse du bout de la ' +
-                'patte une deuxième clé, cachée là depuis un moment.'
-        }
-      },
-      {
-        id: 'take-key2',
-        objective: 'Récupérer la clé laissée par Tsuki',
-        hint: 'Tsuki a fait tomber une clé à côté de lui.',
-        toast: 'Deuxième clé trouvée'
-      },
-      {
-        id: 'open-nursery',
-        objective: 'Ouvrir la dernière porte',
-        hint: 'Il reste une porte fermée, au fond du couloir. Vous avez sa clé.',
-        locked: 'Fermée à clé. Cette clé-là, c\'est Tsuki qui l\'a.'
-      },
-      {
-        /**
-         * L'étape ne nomme jamais le landau : ce serait vendre la surprise
-         * avant même d'avoir passé la porte.
-         */
-        id: 'reach-pram',
-        objective: 'Entrer dans la chambre',
-        hint: 'La porte est ouverte. Entrez…'
-      }
+      { id: 'power-on',     icon: ICONS.power },
+      { id: 'find-key',     icon: ICONS.key },
+      { id: 'open-bedroom', icon: ICONS.door },
+      { id: 'take-fish',    icon: ICONS.fish },
+      { id: 'feed-tsuki',   icon: ICONS.fish },
+      { id: 'bring-tsuki',  icon: ICONS.cat },
+      { id: 'take-key2' },
+      { id: 'open-nursery' },
+      { id: 'reach-pram' }
     ]
   },
 
@@ -287,13 +198,10 @@ const CONFIG = {
    * entrent librement, et le message ne tombe qu'en approchant du landau.
    */
   reveal: {
-    title: 'On va être trois ' + ICONS.heart,
-    text: 'Ce n\'est plus une chambre d\'amis. C\'est sa chambre, et il arrive.',
-    /** Mets '' pour masquer complètement cette ligne. */
-    date: 'Prévu pour mars 2027',
-    /** Deux boutons : fermer et rester sur place, ou relancer une partie. */
-    okButton: 'OK',
-    replayButton: 'Rejouer',
+    /**
+     * Les textes sont dans `I18N.<langue>.reveal` (js/i18n.js) :
+     * titre, phrase, date, et libellés des deux boutons.
+     */
 
     /**
      * Filet de sécurité : délai, en millisecondes, décompté à partir de
@@ -303,11 +211,6 @@ const CONFIG = {
      * Mets 0 pour n'avoir que le déclenchement par proximité.
      */
     autoDelay: 3000
-  },
-
-  /** Textes d'ambiance génériques. */
-  hints: {
-    carrying: 'Vous portez'
   },
 
   /**
@@ -335,7 +238,8 @@ const CONFIG = {
    */
   blackout: {
     haloRadius: 1.8,
-    keepLitRooms: ['Entrée', 'Buanderie']
+    // Identifiants de pièces, pas des noms affichés : voir `rooms` ci-dessus.
+    keepLitRooms: ['entrance', 'laundry']
   },
 
   /** Réglages d'affichage et de gameplay. */

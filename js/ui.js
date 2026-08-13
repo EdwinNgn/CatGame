@@ -14,11 +14,11 @@ const UI = {
    * Les icônes viennent de ICONS (config.js) : voir le commentaire là-bas
    * sur les emoji écrits en séquences d'échappement.
    */
-  CARRY_LABEL: {
-    key1: { icon: ICONS.key, label: 'la clé de notre chambre' },
-    key2: { icon: ICONS.key, label: 'la clé de la dernière porte' },
-    fish: { icon: ICONS.fish, label: 'un poisson' },
-    cat: { icon: ICONS.cat, label: null } // complété avec le nom du chat
+  CARRY_ICON: {
+    key1: ICONS.key,
+    key2: ICONS.key,
+    fish: ICONS.fish,
+    cat: ICONS.cat
   },
 
   init(handlers) {
@@ -55,8 +55,11 @@ const UI = {
       confetti: document.getElementById('confetti-canvas')
     };
 
+    Lang.init();
+    this._buildLangSwitch();
     this._buildAvatars(this.el.p1Avatars, 'p1');
     this._buildAvatars(this.el.p2Avatars, 'p2');
+    this.applyLang();
 
     this.el.twoPlayers.addEventListener('change', () => {
       this.el.p2Field.classList.toggle('is-hidden', !this.el.twoPlayers.checked);
@@ -85,7 +88,7 @@ const UI = {
       btn.className = 'avatar';
       btn.textContent = emoji;
       btn.setAttribute('role', 'radio');
-      btn.setAttribute('aria-label', `Avatar ${emoji}`);
+      btn.setAttribute('aria-label', `${Lang.t('menu.avatarLabel')} ${emoji}`);
       btn.setAttribute('aria-checked', String(who === 'p1' ? i === 0 : i === 1));
       btn.addEventListener('click', () => {
         container.querySelectorAll('.avatar')
@@ -99,16 +102,93 @@ const UI = {
 
   readSetup() {
     const players = [{
-      name: (this.el.p1Name.value || '').trim() || 'Joueur 1',
+      name: (this.el.p1Name.value || '').trim() || Lang.t('menu.player1'),
       avatar: this.selection.p1
     }];
     if (this.el.twoPlayers.checked) {
       players.push({
-        name: (this.el.p2Name.value || '').trim() || 'Joueur 2',
+        name: (this.el.p2Name.value || '').trim() || Lang.t('menu.player2'),
         avatar: this.selection.p2
       });
     }
     return { players };
+  },
+
+  /**
+   * Applique la langue courante à tous les textes fixes de la page.
+   *
+   * Appelé au démarrage et à chaque changement de langue. Les textes qui
+   * dépendent de l'état de la partie (objectif, indices) sont rafraîchis
+   * séparément par le jeu.
+   */
+  applyLang() {
+    const set = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = Lang.t(key);
+    };
+    const setHtml = (id, key) => {
+      const el = document.getElementById(id);
+      // Ces libellés contiennent du <b> : ils sont écrits dans les
+      // traductions, jamais saisis par un joueur.
+      if (el) el.innerHTML = Lang.t(key);
+    };
+
+    document.title = Lang.t('menu.title');
+    set('menu-title', 'menu.title');
+    set('menu-subtitle', 'menu.subtitle');
+    set('p1-label', 'menu.player1');
+    set('p2-label', 'menu.player2');
+    set('two-players-label', 'menu.twoPlayers');
+    set('btn-start', 'menu.start');
+    set('lang-label', 'menu.langLabel');
+    setHtml('help-1', 'menu.help1');
+    setHtml('help-2', 'menu.help2');
+    setHtml('help-3', 'menu.help3');
+    setHtml('help-4', 'menu.help4');
+    set('touchpad-label', 'hud.touchpad');
+
+    [this.el.p1Name, this.el.p2Name].forEach((input) => {
+      if (input) input.placeholder = Lang.t('menu.namePlaceholder');
+    });
+    if (this.el.p1Avatars) {
+      this.el.p1Avatars.setAttribute('aria-label', Lang.t('menu.avatar1Group'));
+    }
+    if (this.el.p2Avatars) {
+      this.el.p2Avatars.setAttribute('aria-label', Lang.t('menu.avatar2Group'));
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.setAttribute('aria-label', Lang.t('hud.canvasLabel'));
+
+    // Boutons de langue : le courant est marqué comme sélectionné.
+    const box = document.getElementById('lang-switch');
+    if (box) {
+      box.querySelectorAll('button').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.lang === Lang.current));
+      });
+    }
+  },
+
+  /** Construit les boutons de langue de l'écran d'accueil. */
+  _buildLangSwitch() {
+    const box = document.getElementById('lang-switch');
+    if (!box) return;
+
+    const labels = { fr: 'Français', en: 'English' };
+    box.innerHTML = '';
+
+    Lang.available.forEach((code) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lang-btn';
+      btn.dataset.lang = code;
+      btn.textContent = labels[code] || code;
+      btn.setAttribute('aria-pressed', String(code === Lang.current));
+      btn.addEventListener('click', () => {
+        Lang.set(code);
+        this.applyLang();
+      });
+      box.appendChild(btn);
+    });
   },
 
   showGame() {
@@ -138,21 +218,23 @@ const UI = {
   /** L'objectif courant, avec la progression dans la chaîne de quêtes. */
   setObjective(text, index, total) {
     this.el.hudStep.textContent = text
-      ? `Étape ${Math.min(index + 1, total)} sur ${total}`
-      : 'Terminé';
+      ? Lang.t('hud.step', { n: Math.min(index + 1, total), total: total })
+      : Lang.t('hud.done');
     this.el.hudObjective.textContent = text || '';
   },
 
   /** Ce que le joueur a dans les mains. */
   setCarrying(id) {
     const el = this.el.hudCarry;
-    if (!id || !this.CARRY_LABEL[id]) {
+    if (!id || !this.CARRY_ICON[id]) {
       el.textContent = '';
       return;
     }
-    const entry = this.CARRY_LABEL[id];
-    const label = entry.label || (CONFIG.cat ? CONFIG.cat.name : 'le chat');
-    el.textContent = `${entry.icon} ${CONFIG.hints.carrying} ${label}`;
+    // Le chat est nomme, les objets sont traduits.
+    const label = (id === 'cat')
+      ? (CONFIG.cat ? CONFIG.cat.name : Lang.t('carry.cat'))
+      : Lang.t('carry.' + id);
+    el.textContent = `${this.CARRY_ICON[id]} ${Lang.t('hud.carrying')} ${label}`;
   },
 
   updateRooms(seen, total) {
@@ -160,7 +242,7 @@ const UI = {
       this.el.hudRooms.textContent = '';
       return;
     }
-    this.el.hudRooms.textContent = `${seen}/${total} pièces explorées`;
+    this.el.hudRooms.textContent = Lang.t('hud.roomsExplored', { n: seen, total: total });
   },
 
   // ------------------------------------------------------------------
@@ -172,7 +254,7 @@ const UI = {
   },
 
   flashRoom(name, seen, total) {
-    this._toast(`${name} · pièce ${seen}/${total}`, 1200);
+    this._toast(Lang.t('hud.roomToast', { name: name, n: seen, total: total }), 1200);
     this.updateRooms(seen, total);
   },
 
@@ -234,7 +316,7 @@ const UI = {
     this.el.modalIcon.textContent = card.icon || '';
     this.el.modalTitle.textContent = card.title || '';
     this.el.modalText.textContent = card.text || '';
-    this.el.modalClose.textContent = 'Continuer';
+    this.el.modalClose.textContent = Lang.t('hud.continue');
     this.el.modal.classList.add('is-visible');
     this.el.modalClose.focus();
     this._onCardClose = onClose || null;
@@ -265,14 +347,14 @@ const UI = {
    * relance une partie.
    */
   showFinal() {
-    const r = CONFIG.reveal;
+    const date = Lang.t('reveal.date');
     this.el.finalIcon.textContent = ICONS.pregnant;
-    this.el.finalTitle.textContent = r.title;
-    this.el.finalText.textContent = r.text;
-    this.el.finalDate.textContent = r.date || '';
-    this.el.finalDate.style.display = r.date ? '' : 'none';
-    this.el.finalOk.textContent = r.okButton || 'OK';
-    this.el.finalReplay.textContent = r.replayButton || 'Rejouer';
+    this.el.finalTitle.textContent = Lang.t('reveal.title') + ' ' + ICONS.heart;
+    this.el.finalText.textContent = Lang.t('reveal.text');
+    this.el.finalDate.textContent = date || '';
+    this.el.finalDate.style.display = date ? '' : 'none';
+    this.el.finalOk.textContent = Lang.t('reveal.okButton');
+    this.el.finalReplay.textContent = Lang.t('reveal.replayButton');
     this.el.final.classList.add('is-visible');
     this.el.finalOk.focus();
     this.startConfetti();

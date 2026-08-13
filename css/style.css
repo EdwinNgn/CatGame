@@ -143,6 +143,57 @@ body.is-playing #app {
   outline-offset: 2px;
 }
 
+/* ---------- Choix de la langue ---------- */
+
+.lang-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.lang-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.lang-switch {
+  display: flex;
+  gap: 6px;
+}
+
+.lang-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  color: var(--ink-soft);
+  background: #fff;
+  border: 2px solid #e3dbcd;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.lang-btn:hover { color: var(--ink); }
+
+/* La langue active est marquée par aria-pressed, pas par une classe :
+   l'état est ainsi porté par l'attribut d'accessibilité lui-même. */
+.lang-btn[aria-pressed="true"] {
+  background: #fdeeea;
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.lang-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .checkbox {
   display: flex;
   align-items: center;

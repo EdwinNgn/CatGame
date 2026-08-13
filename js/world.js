@@ -292,7 +292,7 @@ class World {
       // Index case -> pièce, construit une seule fois.
       this._zoneIndex = new Map();
       Object.entries(this.zones).forEach(([name, cells]) => {
-        const room = (CONFIG.rooms || []).find((x2) => x2.name === name);
+        const room = (CONFIG.rooms || []).find((x2) => x2.id === name);
         if (!room) return;
         cells.forEach((cell) => this._zoneIndex.set(cell.row * this.cols + cell.col, room));
       });
@@ -304,26 +304,27 @@ class World {
   /** Marque comme visitée la pièce où se trouve le joueur. */
   discoverAt(x, y) {
     const room = this.roomAt(x, y);
-    if (room && !this.discovered.has(room.name)) {
-      this.discovered.add(room.name);
+    if (room && !this.discovered.has(room.id)) {
+      this.discovered.add(room.id);
       return room;
     }
     return null;
   }
 
-  /** Nom affichable d'une pièce : la chambre reste anonyme jusqu'au bout. */
+  /**
+   * Nom affichable d'une pièce, dans la langue courante.
+   * La chambre du bébé reste anonyme jusqu'à son ouverture.
+   */
   displayName(room) {
     if (!room) return '';
-    if (room.nursery) {
-      return this.nurseryFurnished
-        ? (room.revealedName || room.name)
-        : (room.hiddenName || 'Une porte fermée');
+    if (room.nursery && !this.nurseryFurnished) {
+      return Lang.t('rooms.nurseryHidden');
     }
-    return room.name;
+    return Lang.t('rooms.' + room.id);
   }
 
   isRoomVisible(room) {
-    return !this.fog || !room || this.discovered.has(room.name);
+    return !this.fog || !room || this.discovered.has(room.id);
   }
 
   get roomsTotal() {
@@ -652,7 +653,7 @@ class World {
       // avant ça, aucun nom ne doit trahir la surprise.
       if (room.nursery && !this.nurseryFurnished) return;
       ctx.fillText(
-        (room.nursery ? room.revealedName || room.name : room.name).toUpperCase(),
+        Lang.t('rooms.' + room.id).toUpperCase(),
         room.label.col * ts,
         room.label.row * ts
       );
@@ -2158,9 +2159,9 @@ class World {
     const ts = this.tileSize;
 
     (CONFIG.rooms || []).forEach((room) => {
-      if (this.discovered.has(room.name)) return;
+      if (this.discovered.has(room.id)) return;
 
-      const cells = this.zones[room.name];
+      const cells = this.zones[room.id];
       if (!cells || !cells.length) return;
 
       ctx.save();

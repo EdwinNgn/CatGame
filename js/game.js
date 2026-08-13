@@ -214,8 +214,10 @@ const Game = {
   /** Met le HUD et l'indice à jour selon l'étape courante. */
   _syncObjective() {
     const step = this.step;
-    UI.setObjective(step ? step.objective : '', this.stepIndex, this.steps.length);
-    UI.setHint(step ? step.hint : '');
+    // Les libelles viennent de i18n, reperes par l'id de l'etape.
+    UI.setObjective(step ? Lang.t('steps.' + step.id + '.objective') : '',
+                    this.stepIndex, this.steps.length);
+    UI.setHint(step ? Lang.t('steps.' + step.id + '.hint') : '');
     UI.setCarrying(this.carrying);
   },
 
@@ -232,7 +234,14 @@ const Game = {
       this._syncObjective();
     };
 
-    if (step && step.card) UI.showCard(step.card, done);
+    // Une etape n'ouvre une carte que si elle a une icone.
+    if (step && step.icon) {
+      UI.showCard({
+        icon: step.icon,
+        title: Lang.t('steps.' + step.id + '.title'),
+        text: Lang.t('steps.' + step.id + '.text')
+      }, done);
+    }
     else done();
   },
 
@@ -281,12 +290,11 @@ const Game = {
     const cat = this.world.cat;
     if (!cat || cat.fed || cat.carried) return;
     if (this.carrying === 'fish') return; // il va être servi
-    if (!CONFIG.cat.hungryHint) return;
 
     const near = this.players.some((p) =>
       this.world.isNearCat(p.x, p.y, CONFIG.player.pickupRange + 10));
 
-    if (near) UI.flashHungry(CONFIG.cat.hungryHint);
+    if (near) UI.flashHungry(Lang.t('cat.hungryHint'));
   },
 
   /** Chaque étape a sa propre condition de réussite. */
@@ -313,7 +321,7 @@ const Game = {
           if (key) {
             key.taken = true;
             this.carrying = 'key1';
-            UI.flashPickup(step.toast);
+            UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
             this._completeStep();
             return;
           }
@@ -326,13 +334,17 @@ const Game = {
           if (fish) {
             fish.taken = true;
             this.carrying = 'fish';
-            UI.flashPickup(step.toast);
+            UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
 
             // Tsuki a entendu le papier : il file se cacher.
             const moved = this.world.moveCatToHideout();
             this._completeStep(() => {
-              if (moved && CONFIG.cat.movedCard) {
-                UI.showCard(CONFIG.cat.movedCard, () => this._syncObjective());
+              if (moved) {
+                UI.showCard({
+                  icon: CONFIG.cat.movedIcon,
+                  title: Lang.t('cat.movedTitle'),
+                  text: Lang.t('cat.movedText')
+                }, () => this._syncObjective());
               }
             });
             return;
@@ -379,7 +391,7 @@ const Game = {
           if (key) {
             key.taken = true;
             this.carrying = 'key2';
-            UI.flashPickup(step.toast);
+            UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
             this._completeStep();
             return;
           }
@@ -436,7 +448,7 @@ const Game = {
   _lockedMessage(lock) {
     const stepId = lock === 'bedroom' ? 'open-bedroom' : 'open-nursery';
     const step = this.steps.find((s) => s.id === stepId);
-    return step ? step.locked : null;
+    return step ? Lang.t('steps.' + step.id + '.locked') : null;
   },
 
   /**
