@@ -132,8 +132,12 @@ const I18N = {
       },
       'open-nursery': {
         objective: 'Ouvrir la dernière porte',
+        /** Variante affichée en mode deux joueurs. */
+        objective2p: 'Ouvrir la dernière porte, tous les deux',
         hint: 'Il reste une porte fermée, au fond du couloir. Vous avez sa clé.',
-        locked: 'Fermée à clé. Cette clé-là, c\'est Tsuki qui l\'a.'
+        locked: 'Fermée à clé. Cette clé-là, c\'est Tsuki qui l\'a.',
+        /** Affiché à deux joueurs quand l'autre n'est pas encore là. */
+        waiting: 'Attendez l\'autre joueur devant la porte…'
       },
       'reach-pram': {
         objective: 'Entrer dans la chambre',
@@ -265,8 +269,12 @@ const I18N = {
       },
       'open-nursery': {
         objective: 'Unlock the last door',
+        /** Variant shown in two-player mode. */
+        objective2p: 'Unlock the last door, both of you',
         hint: 'One door is still locked, at the end of the hallway. You have its key.',
-        locked: 'Locked. That key is the one Tsuki has.'
+        locked: 'Locked. That key is the one Tsuki has.',
+        /** Shown in two-player mode when the other one has not arrived. */
+        waiting: 'Wait for the other player at the door…'
       },
       'reach-pram': {
         objective: 'Step into the room',

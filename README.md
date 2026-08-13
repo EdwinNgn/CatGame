@@ -175,11 +175,14 @@ les valeurs, et ajoute son libellé dans `_buildLangSwitch` (`js/ui.js`).
 | `world.minTileSize` | Taille minimale d'une case à l'écran. En dessous, le jeu zoome et la caméra suit le joueur au lieu de tout afficher. Augmente pour un zoom plus serré. |
 | `world.fog` | `true` : les pièces restent masquées jusqu'à ce qu'on y entre. |
 | `player.speed` | Vitesse de déplacement. |
+| `player.requireBothAtNursery` | À deux joueurs, exige que les deux soient devant la dernière porte pour l'ouvrir. `false` pour qu'un seul suffise. Sans effet en solo. |
 
 ## Commandes
 
 - Joueur 1 : flèches du clavier
 - Joueur 2 : Z Q S D (mode deux joueurs sur le même écran)
+- À deux, l'objet ramassé reste sur celui qui l'a pris, et la dernière porte
+  ne s'ouvre que si les deux joueurs sont devant
 - Mobile : glissez le doigt sur le plan, ou sur le pavé sous la carte pour
   garder le pouce en bas sans masquer la vue
 - Entrée ou Espace pour fermer une carte

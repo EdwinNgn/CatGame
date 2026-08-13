@@ -271,6 +271,15 @@ const CONFIG = {
   player: {
     speed: 2.6,
     radius: 11,
-    pickupRange: 26
+    pickupRange: 26,
+
+    /**
+     * En mode deux joueurs, exige que TOUS les joueurs soient devant la
+     * dernière porte pour l'ouvrir : l'annonce se découvre ensemble, pas
+     * par celui qui arrive le premier.
+     *
+     * Mets `false` pour qu'un seul suffise. Sans effet en solo.
+     */
+    requireBothAtNursery: true
   }
 };

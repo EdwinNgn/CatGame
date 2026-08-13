@@ -19,6 +19,14 @@ const Game = {
   players: [],
   stepIndex: 0,
   carrying: null,
+  /**
+   * Index du joueur qui porte l'objet courant.
+   *
+   * Sans lui, le jeu ne savait pas QUI portait quoi : le chat suivait
+   * toujours le joueur 1, et l'icone de l'objet s'affichait sur les deux
+   * joueurs a la fois.
+   */
+  carrierIndex: 0,
   revealed: false,
   /**
    * Horodatage de l'entrée dans la chambre, pour le déclenchement différé.
@@ -78,6 +86,7 @@ const Game = {
 
     this.stepIndex = 0;
     this.carrying = null;
+    this.carrierIndex = 0;
     this.revealed = false;
     this._nurserySince = null;
 
@@ -215,8 +224,17 @@ const Game = {
   _syncObjective() {
     const step = this.step;
     // Les libelles viennent de i18n, reperes par l'id de l'etape.
-    UI.setObjective(step ? Lang.t('steps.' + step.id + '.objective') : '',
-                    this.stepIndex, this.steps.length);
+    // Certaines etapes ont une variante a deux joueurs (`objective2p`).
+    let objective = '';
+    if (step) {
+      const twoPlayers = this.players.length > 1 &&
+                         CONFIG.player.requireBothAtNursery !== false;
+      const alt = 'steps.' + step.id + '.objective2p';
+      const useAlt = twoPlayers && Lang.t(alt) !== alt;
+      objective = Lang.t(useAlt ? alt : 'steps.' + step.id + '.objective');
+    }
+
+    UI.setObjective(objective, this.stepIndex, this.steps.length);
     UI.setHint(step ? Lang.t('steps.' + step.id + '.hint') : '');
     UI.setCarrying(this.carrying);
   },
@@ -267,9 +285,9 @@ const Game = {
       }
     });
 
-    // Tsuki suit le porteur.
+    // Tsuki suit celui qui le porte, pas forcement le joueur 1.
     if (this.carrying === 'cat') {
-      const holder = this.players[0];
+      const holder = this.players[this.carrierIndex] || this.players[0];
       this.world.cat.x = holder.x;
       this.world.cat.y = holder.y - this.world.tileSize * 0.42;
     }
@@ -316,11 +334,13 @@ const Game = {
         break;
 
       case 'find-key':
-        for (const p of this.players) {
+        for (let i = 0; i < this.players.length; i++) {
+          const p = this.players[i];
           const key = this.world.thingNear(p.x, p.y, range, 'key1');
           if (key) {
             key.taken = true;
             this.carrying = 'key1';
+            this.carrierIndex = i;
             UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
             this._completeStep();
             return;
@@ -329,11 +349,13 @@ const Game = {
         break;
 
       case 'take-fish':
-        for (const p of this.players) {
+        for (let i = 0; i < this.players.length; i++) {
+          const p = this.players[i];
           const fish = this.world.thingNear(p.x, p.y, range, 'fish');
           if (fish) {
             fish.taken = true;
             this.carrying = 'fish';
+            this.carrierIndex = i;
             UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
 
             // Tsuki a entendu le papier : il file se cacher.
@@ -353,11 +375,14 @@ const Game = {
         break;
 
       case 'feed-tsuki':
-        for (const p of this.players) {
+        for (let i = 0; i < this.players.length; i++) {
+          const p = this.players[i];
           if (this.world.isNearCat(p.x, p.y, range + 6)) {
             this.world.cat.fed = true;
             this.world.cat.carried = true;
             this.carrying = 'cat';
+            // Celui qui nourrit Tsuki est celui qui le porte.
+            this.carrierIndex = i;
             this._completeStep();
             return;
           }
@@ -386,11 +411,13 @@ const Game = {
         break;
 
       case 'take-key2':
-        for (const p of this.players) {
+        for (let i = 0; i < this.players.length; i++) {
+          const p = this.players[i];
           const key = this.world.thingNear(p.x, p.y, range, 'key2');
           if (key) {
             key.taken = true;
             this.carrying = 'key2';
+            this.carrierIndex = i;
             UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
             this._completeStep();
             return;
@@ -423,13 +450,25 @@ const Game = {
         return;
       }
 
-      // Ouverture de la dernière porte : pas de message ici, les joueurs
-      // entrent librement. L'annonce attend le landau, ou le délai.
+      /*
+       * Ouverture de la dernière porte. Pas de message ici : les joueurs
+       * entrent librement, l'annonce attend le bébé ou le délai.
+       *
+       * À deux, il faut que TOUT LE MONDE soit devant la porte : la
+       * découverte se fait ensemble, pas par celui qui arrive le premier.
+       */
       if (step && step.id === 'open-nursery' &&
           this.world.isAtDoor(p.x, p.y, 'nursery') && this.carrying === 'key2') {
-        this.carrying = null;
-        this.world.unlock('nursery');
-        this._completeStep();
+
+        if (this._everyoneAtNurseryDoor()) {
+          this.carrying = null;
+          this.world.unlock('nursery');
+          this._completeStep();
+        } else {
+          const msg = Lang.t('steps.open-nursery.waiting');
+          UI.setHint(msg);
+          UI.flashLocked(msg);
+        }
         return;
       }
 
@@ -442,6 +481,17 @@ const Game = {
         }
       }
     }
+  },
+
+  /**
+   * Tous les joueurs sont-ils devant la dernière porte ?
+   *
+   * Toujours vrai en solo, et si `player.requireBothAtNursery` est désactivé.
+   */
+  _everyoneAtNurseryDoor() {
+    if (this.players.length < 2) return true;
+    if (CONFIG.player.requireBothAtNursery === false) return true;
+    return this.players.every((p) => this.world.isAtDoor(p.x, p.y, 'nursery'));
   },
 
   /** Le message affiché quand on bute sur une porte fermée. */
@@ -520,9 +570,15 @@ const Game = {
 
     this.world.draw(ctx, cam, time);
 
-    [...this.players]
-      .sort((a, b) => a.y - b.y)
-      .forEach((p) => p.draw(ctx, cam, this.carrying));
+    // Trie par profondeur, en gardant l'index d'origine pour savoir qui
+    // porte l'objet.
+    this.players
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => a.p.y - b.p.y)
+      .forEach(({ p, i }) => {
+        const held = (i === this.carrierIndex) ? this.carrying : null;
+        p.draw(ctx, cam, held);
+      });
 
     // Tsuki porté : dessiné au-dessus du joueur.
     if (this.carrying === 'cat') {
