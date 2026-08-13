@@ -85,11 +85,11 @@ const CONFIG = {
     '#...BBBBBBB..X#~~~~~~################',
     '#...BBBBBBB..X#~~~~~~#KKKKKKKKKKK:::#',
     '#...BBBBBBB...########KKKKKKKKKKK:::#',
-    '#.............#AA....+::::::t:::::TT#',
+    '#.............#AA.12.+::::::t:::::TT#',
     '#.............r......+::::::::::::TT#',
     '#AA...........r......#FFLLLUU:::::::#',
     '#AA...GGG.....#......#LLLLLUU:::::::#',
-    '###############.12...########.......#',
+    '###############......########.......#',
     '#DDDDDD...AAAA#......+..............#',
     '#DDDDDD...AAAA#...GG.+..............#',
     '#DDDDDD.......#..#######............#',
@@ -334,7 +334,7 @@ const CONFIG = {
    * une fois le courant revenu, plutôt que d'être remasquées.
    */
   blackout: {
-    haloRadius: 3.2,
+    haloRadius: 1.8,
     keepLitRooms: ['Entrée', 'Buanderie']
   },
 
