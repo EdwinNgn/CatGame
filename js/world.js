@@ -59,6 +59,12 @@ class World {
     /** Les deux serrures. */
     this.locks = { bedroom: false, nursery: false };
 
+    /**
+     * Panne de courant : au départ tout est noir sauf un halo autour des
+     * joueurs. Le tableau électrique de la buanderie y met fin.
+     */
+    this.blackout = true;
+
     /** Le berceau n'apparaît qu'une fois la dernière chambre ouverte. */
     this.nurseryFurnished = false;
 
@@ -87,6 +93,41 @@ class World {
   /** Rend le poisson visible dans notre chambre. */
   revealFish() {
     if (this.things.fish) this.things.fish.active = true;
+  }
+
+  /**
+   * Position du tableau électrique, déduite du plan.
+   * @returns {{x:number, y:number}|null}
+   */
+  get breaker() {
+    const piece = (this.pieces || []).find((p) => p.kind === 'breaker');
+    if (!piece) return null;
+    const ts = this.tileSize;
+    return {
+      x: (piece.col + piece.w / 2) * ts,
+      y: (piece.row + piece.h / 2) * ts
+    };
+  }
+
+  /** Vrai si un joueur est au contact du tableau électrique. */
+  isNearBreaker(x, y, range) {
+    const b = this.breaker;
+    if (!b) return false;
+    return Math.hypot(b.x - x, b.y - y) <= range;
+  }
+
+  /**
+   * Rétablit le courant. Les pièces traversées dans le noir restent
+   * découvertes, sinon on aurait l'impression de les avoir explorées pour rien.
+   */
+  restorePower() {
+    this.blackout = false;
+    const keep = (CONFIG.blackout && CONFIG.blackout.keepLitRooms) || [];
+    keep.forEach((name) => {
+      if (this.zones[name]) this.discovered.add(name);
+    });
+    // Les manettes du tableau basculent : la couche figée doit être refaite.
+    this.staticLayer = null;
   }
 
   /**
@@ -1726,6 +1767,42 @@ class World {
     });
   }
 
+  /**
+   * Tableau électrique : coffret contre le mur, avec sa rangée de
+   * disjoncteurs. Les manettes basculent quand le courant est rétabli.
+   */
+  _piece_breaker(ctx, rect, facing) {
+    this._oriented(ctx, rect, facing, ({ w, h }) => {
+      // Coffret
+      this._fillRound(ctx, 0, 0, w, h, 3, '#d7d2c6');
+      ctx.strokeStyle = '#9a948a';
+      ctx.lineWidth = Math.max(1.2, Math.min(w, h) * 0.06);
+      this._roundRect(ctx, 0.8, 0.8, w - 1.6, h - 1.6, 3);
+      ctx.stroke();
+
+      // Rail des disjoncteurs
+      const rail = h * 0.42;
+      ctx.fillStyle = '#3f454a';
+      ctx.fillRect(w * 0.12, rail - h * 0.06, w * 0.76, h * 0.12);
+
+      // Manettes : relevées quand le courant est là, baissées sinon
+      const n = Math.max(3, Math.round(w / 9));
+      const bw = (w * 0.76) / n;
+      for (let i = 0; i < n; i++) {
+        const bx = w * 0.12 + i * bw;
+        ctx.fillStyle = this.blackout ? '#c0392b' : '#7cc27c';
+        ctx.fillRect(bx + bw * 0.18, this.blackout ? rail : rail - h * 0.26,
+                     bw * 0.64, h * 0.26);
+      }
+
+      // Voyant
+      ctx.fillStyle = this.blackout ? '#5a2a24' : '#eaf7a0';
+      ctx.beginPath();
+      ctx.arc(w * 0.5, h * 0.82, Math.max(1.2, Math.min(w, h) * 0.07), 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
   /** Meuble bas : caisson avec tiroirs répartis sur la longueur. */
   _piece_shelf(ctx, { x, y, w, h }) {
     this._fillRound(ctx, x, y, w, h, 3, '#a58463');
@@ -2012,6 +2089,70 @@ class World {
    * Les murs restent visibles : on garde la lecture du plan, mais on ne voit
    * pas ce qu'il y a dedans.
    */
+  /**
+   * L'obscurité de la panne : tout est noir sauf un halo autour de chaque
+   * joueur, et l'éclair du tableau électrique qui reste visible pour donner
+   * la direction.
+   *
+   * Dessiné en une passe avec `destination-out` : on peint le noir, puis on
+   * y perce les halos. Un dégradé donne un bord doux plutôt qu'un disque net.
+   *
+   * @param {{x:number,y:number}[]} lights positions des joueurs
+   */
+  drawBlackout(ctx, camera, lights, time) {
+    const ts = this.tileSize;
+    const radius = ((CONFIG.blackout && CONFIG.blackout.haloRadius) || 3) * ts;
+
+    // Calque d'obscurité, percé aux positions des joueurs.
+    const dark = document.createElement('canvas');
+    dark.width = Math.max(1, Math.ceil(camera.w));
+    dark.height = Math.max(1, Math.ceil(camera.h));
+    const dctx = dark.getContext('2d');
+
+    dctx.fillStyle = 'rgba(6, 10, 12, 0.97)';
+    dctx.fillRect(0, 0, dark.width, dark.height);
+
+    dctx.globalCompositeOperation = 'destination-out';
+    lights.forEach((p) => {
+      const sx = p.x - camera.x;
+      const sy = p.y - camera.y;
+      const g = dctx.createRadialGradient(sx, sy, radius * 0.25, sx, sy, radius);
+      g.addColorStop(0, 'rgba(0,0,0,1)');
+      g.addColorStop(0.6, 'rgba(0,0,0,0.75)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      dctx.fillStyle = g;
+      dctx.beginPath();
+      dctx.arc(sx, sy, radius, 0, Math.PI * 2);
+      dctx.fill();
+    });
+    dctx.globalCompositeOperation = 'source-over';
+
+    ctx.drawImage(dark, 0, 0);
+
+    // L'éclair du tableau électrique, par-dessus le noir.
+    const b = this.breaker;
+    if (b) {
+      const sx = b.x - camera.x;
+      const sy = b.y - camera.y;
+      const pulse = 0.6 + 0.4 * Math.sin(time / 260);
+
+      const glow = ctx.createRadialGradient(sx, sy, 2, sx, sy, ts * 1.1);
+      glow.addColorStop(0, `rgba(255, 226, 120, ${0.5 * pulse + 0.2})`);
+      glow.addColorStop(1, 'rgba(255, 226, 120, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(sx, sy, ts * 1.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 1;
+      ctx.font = emojiFont(ts * 0.95);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ICONS.power, sx, sy);
+    }
+  }
+
   drawFog(ctx, camera) {
     if (!this.fog) return;
     const ts = this.tileSize;

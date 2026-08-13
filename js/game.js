@@ -297,6 +297,16 @@ const Game = {
     const range = CONFIG.player.pickupRange;
 
     switch (step.id) {
+      case 'power-on':
+        for (const p of this.players) {
+          if (this.world.isNearBreaker(p.x, p.y, range + 8)) {
+            this.world.restorePower();
+            this._completeStep();
+            return;
+          }
+        }
+        break;
+
       case 'find-key':
         for (const p of this.players) {
           const key = this.world.thingNear(p.x, p.y, range, 'key1');
@@ -513,8 +523,17 @@ const Game = {
       );
     }
 
-    // Le voile passe après les joueurs : on ne les voit pas à travers un mur.
-    this.world.drawFog(ctx, cam);
+    /*
+     * Pendant la panne, l'obscurité remplace le brouillard : tout est noir
+     * sauf le halo autour des joueurs. Ensuite le brouillard reprend son rôle.
+     * Dans les deux cas c'est dessiné après les joueurs, pour qu'on ne les
+     * voie pas à travers un mur.
+     */
+    if (this.world.blackout) {
+      this.world.drawBlackout(ctx, cam, this.players, time);
+    } else {
+      this.world.drawFog(ctx, cam);
+    }
 
     Input.drawTouchStick(ctx, this.canvas, this._viewScale);
   }

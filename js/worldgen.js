@@ -73,7 +73,8 @@ const LEGEND = {
   'E': { tile: TILE.FURNITURE, furniture: 'sideboard' },
   'G': { tile: TILE.FURNITURE, furniture: 'dresser' },
   'J': { tile: TILE.FURNITURE, furniture: 'cattree' },
-  'U': { tile: TILE.FURNITURE, furniture: 'worktop' }
+  'U': { tile: TILE.FURNITURE, furniture: 'worktop' },
+  'Z': { tile: TILE.FURNITURE, furniture: 'breaker' }
 };
 
 const WorldGen = {

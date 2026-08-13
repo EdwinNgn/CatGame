@@ -25,6 +25,7 @@ const ICONS = {
   cat: '\u{1F431}',        // 🐱 tête de chat
   paw: '\u{1F43E}',        // 🐾 empreintes
   pregnant: '\u{1F930}',   // 🤰 femme enceinte
+  power: '\u{26A1}',       // ⚡ électricité
   heart: '\u{1F90D}',      // 🤍 cœur blanc
   bottle: '\u{1F37C}'      // 🍼 biberon
 };
@@ -60,6 +61,7 @@ const CONFIG = {
    *   quand on le dépose dans sa chambre.
    *
    *   Meubles (infranchissables) :
+   *   Z tableau électrique (à relancer au début, dans la buanderie)
    *   S canapé   T table    B lit       K plan de travail équipé (évier + plaques)
    *   U plan de travail nu (sans rien dessus)   F frigo
    *   W baignoire  H douche  N vasque (2 max)   C toilettes  M machine à laver
@@ -91,7 +93,7 @@ const CONFIG = {
     '#DDDDDD...AAAA#......+..............#',
     '#DDDDDD...AAAA#...GG.+..............#',
     '#DDDDDD.......#..#######............#',
-    '#.............+..+....X#...TTTTT....#',
+    '#.............+..#Z...X#...TTTTT....#',
     '#.............+..+....X#...TTTTT....#',
     '#.............#..#....X#............#',
     '#.............#..#MMUUU#............#',
@@ -181,6 +183,22 @@ const CONFIG = {
    */
   quest: {
     steps: [
+      {
+        /**
+         * Ouverture dans le noir : les plombs ont sauté. On ne voit qu'un
+         * halo autour de soi, et l'éclair ⚡ du tableau électrique reste
+         * visible malgré l'obscurité pour ne pas chercher trop longtemps.
+         */
+        id: 'power-on',
+        objective: 'Remettre l\'électricité',
+        hint: 'Les plombs ont sauté. Le tableau électrique est dans la buanderie.',
+        card: {
+          icon: '\u{26A1}',
+          title: 'La lumière revient',
+          text: 'Un coup sur le disjoncteur et l\'appartement se rallume. ' +
+                'Bien. Maintenant, au travail.'
+        }
+      },
       {
         id: 'find-key',
         objective: 'Trouver la clé de notre chambre',
@@ -307,6 +325,18 @@ const CONFIG = {
     '\u{1F436}',  // 🐶 chien
     '\u{1F431}'   // 🐱 chat
   ],
+
+  /**
+   * La panne de courant du début.
+   *
+   * `haloRadius` est le rayon éclairé autour des joueurs, en cases.
+   * `keepLitRooms` : les pièces traversées dans le noir restent découvertes
+   * une fois le courant revenu, plutôt que d'être remasquées.
+   */
+  blackout: {
+    haloRadius: 3.2,
+    keepLitRooms: ['Entrée', 'Buanderie']
+  },
 
   /** Réglages d'affichage et de gameplay. */
   world: {

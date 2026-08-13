@@ -16,6 +16,11 @@ python3 -m http.server 8000
 
 ## Le déroulé
 
+0. **Remettre l'électricité.** Les plombs ont sauté : l'appartement est noir,
+   on n'y voit qu'un halo autour de soi. L'éclair ⚡ du tableau électrique
+   reste visible malgré l'obscurité et donne la direction de la buanderie.
+   Une fois le courant rétabli, l'entrée et la buanderie restent découvertes
+   et le jeu reprend normalement.
 1. **Trouver la clé** de notre chambre, cachée dans le salon.
 2. **Ouvrir notre chambre** avec cette clé.
 3. **Récupérer le poisson** posé près du lit.
@@ -89,7 +94,11 @@ Meubles, infranchissables :
 | `D` | bureau | `O` | carton |
 | `P` | plante | `A` | fauteuil |
 | `E` | buffet | `G` | commode |
-| `J` | arbre à chat | | |
+| `J` | arbre à chat | `Z` | tableau électrique |
+
+Le tableau électrique `Z` est l'objectif de la première étape : c'est lui qu'il
+faut atteindre dans le noir pour rétablir le courant. Ses manettes passent du
+rouge au vert une fois la lumière revenue.
 
 Le buffet `E` a des portes à battants, la commode `G` des tiroirs empilés :
 c'est ce qui les distingue visuellement. Le plan de travail existe en deux
@@ -140,7 +149,8 @@ console si la partie est insoluble :
 
 | Clé | Rôle |
 |---|---|
-| `quest.steps` | Les 8 étapes : objectif affiché, indice, message de porte fermée, et la carte qui s'ouvre à la réussite. Ne change pas les `id`. |
+| `quest.steps` | Les 9 étapes : objectif affiché, indice, message de porte fermée, et la carte qui s'ouvre à la réussite. Ne change pas les `id`. |
+| `blackout` | La panne du début : `haloRadius` le rayon éclairé autour des joueurs en cases, `keepLitRooms` les pièces qui restent découvertes après le rétablissement. |
 | `cat` | Le nom et les couleurs du chat. |
 | `reveal` | L'annonce : titre, texte, date (`date: ''` pour masquer), libellé des deux boutons (`okButton`, `replayButton`) et `autoDelay`, le délai en millisecondes avant déclenchement automatique dans la chambre (`0` pour n'avoir que la proximité). |
 | `world.tileSize` | Taille d'une case en pixels dans le plan. |
