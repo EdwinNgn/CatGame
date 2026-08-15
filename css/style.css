@@ -414,6 +414,11 @@ body.is-playing #app {
    souris, et on le masque sur ordinateur où le clavier suffit. */
 @media (hover: none) and (pointer: coarse) {
   body.is-playing #touchpad { display: flex; }
+
+  /* Sur un appareil tactile il n'y a pas de clavier : le mode deux joueurs
+     est injouable et les touches n'ont rien à indiquer. Même critère que
+     pour le pavé, les deux vont de pair. */
+  .keyboard-only { display: none !important; }
 }
 
 .hint {

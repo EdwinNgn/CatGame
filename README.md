@@ -180,7 +180,9 @@ les valeurs, et ajoute son libellé dans `_buildLangSwitch` (`js/ui.js`).
 ## Commandes
 
 - Joueur 1 : flèches du clavier
-- Joueur 2 : Z Q S D (mode deux joueurs sur le même écran)
+- Joueur 2 : Z Q S D (mode deux joueurs sur le même écran, ordinateur seulement)
+- Sur un appareil tactile, le mode deux joueurs et les aides clavier sont
+  masqués : sans clavier, jouer à deux est impossible
 - À deux, l'objet ramassé s'affiche sur les deux joueurs (l'inventaire est
   commun), Tsuki suit celui qui l'a attrapé, et la dernière porte ne s'ouvre
   que si les deux joueurs sont devant

@@ -32,7 +32,8 @@ const I18N = {
       avatar2Group: 'Avatar du joueur 2',
       help1: '<b>Joueur 1</b> : flèches du clavier',
       help2: '<b>Joueur 2</b> : Z Q S D',
-      help3: '<b>Mobile</b> : glissez le doigt sur l\'écran',
+      help3: '<b>Mobile</b> : glissez le doigt sur le plan, ou sur la zone ' +
+             'sous la carte',
       help4: 'Marchez sur un objet pour le prendre',
       langLabel: 'Langue'
     },
@@ -174,7 +175,8 @@ const I18N = {
       avatar2Group: 'Player 2 avatar',
       help1: '<b>Player 1</b>: arrow keys',
       help2: '<b>Player 2</b>: W A S D',
-      help3: '<b>Mobile</b>: drag your finger on the screen',
+      help3: '<b>Mobile</b>: drag your finger on the plan, or on the area ' +
+             'below the map',
       help4: 'Walk onto an object to pick it up',
       langLabel: 'Language'
     },

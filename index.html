@@ -27,7 +27,9 @@
           <div class="avatars" id="p1-avatars" role="radiogroup" aria-label="Avatar du joueur 1"></div>
         </div>
 
-        <label class="checkbox">
+        <!-- `keyboard-only` : masqué sur les appareils tactiles, où le mode
+             deux joueurs et les touches du clavier n'ont pas de sens. -->
+        <label class="checkbox keyboard-only">
           <input id="two-players" type="checkbox">
           <span id="two-players-label">Jouer à deux sur le même écran</span>
         </label>
@@ -41,8 +43,8 @@
         <button id="btn-start" class="btn btn-primary" type="button">Commencer l'exploration</button>
 
         <ul class="controls-help">
-          <li id="help-1"><b>Joueur 1</b> : flèches du clavier</li>
-          <li id="help-2"><b>Joueur 2</b> : Z Q S D</li>
+          <li id="help-1" class="keyboard-only"><b>Joueur 1</b> : flèches du clavier</li>
+          <li id="help-2" class="keyboard-only"><b>Joueur 2</b> : Z Q S D</li>
           <li id="help-3"><b>Mobile</b> : glissez le doigt sur l'écran</li>
           <li id="help-4">Marchez sur un objet pour le prendre</li>
         </ul>

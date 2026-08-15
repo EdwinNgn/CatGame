@@ -65,6 +65,13 @@ const UI = {
       this.el.p2Field.classList.toggle('is-hidden', !this.el.twoPlayers.checked);
     });
 
+    // Sur tactile, on décoche et on referme le champ du joueur 2 : la case
+    // est masquée, elle ne doit pas rester active en arrière-plan.
+    if (this.isTouchOnly) {
+      this.el.twoPlayers.checked = false;
+      this.el.p2Field.classList.add('is-hidden');
+    }
+
     this.el.start.addEventListener('click', () => handlers.onStart(this.readSetup()));
     this.el.modalClose.addEventListener('click', () => this.closeCard());
     this.el.finalOk.addEventListener('click', () => this.dismissFinal());
@@ -100,12 +107,25 @@ const UI = {
     });
   },
 
+  /**
+   * Vrai sur un appareil tactile sans souris.
+   *
+   * Même critère que le CSS, pour que le code et l'affichage ne puissent pas
+   * divergér : sans clavier, le mode deux joueurs est injouable.
+   */
+  get isTouchOnly() {
+    return window.matchMedia &&
+           window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  },
+
   readSetup() {
     const players = [{
       name: (this.el.p1Name.value || '').trim() || Lang.t('menu.player1'),
       avatar: this.selection.p1
     }];
-    if (this.el.twoPlayers.checked) {
+    // Sur tactile, on reste en solo même si la case avait été cochée avant
+    // un changement de fenêtre ou une rotation.
+    if (this.el.twoPlayers.checked && !this.isTouchOnly) {
       players.push({
         name: (this.el.p2Name.value || '').trim() || Lang.t('menu.player2'),
         avatar: this.selection.p2
