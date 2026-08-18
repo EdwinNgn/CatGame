@@ -73,9 +73,7 @@ const I18N = {
 
     /** Le chat */
     cat: {
-      hungryHint: 'Tsuki miaule, il semble avoir faim.',
-      movedTitle: 'Plus personne en cuisine',
-      movedText: 'Tsuki a filé ! Il ne doit pas être bien loin.'
+      hungryHint: 'Tsuki miaule, il semble avoir faim.'
     },
 
     /** Les neuf étapes, par identifiant */
@@ -113,7 +111,7 @@ const I18N = {
       },
       'feed-tsuki': {
         objective: 'Retrouver Tsuki et lui donner le poisson',
-        hint: 'Tsuki a quitté la cuisine. Il se cache quelque part dans l\'appartement.',
+        hint: 'Tsuki se promène dans l\'appartement. Trouvez-le pour lui donner le poisson.',
         title: 'Tsuki est conquis',
         text: 'Il engloutit le poisson en trois bouchées, se frotte contre ' +
               'vos jambes et se laisse enfin porter. Le ventre plein, il est ' +
@@ -212,9 +210,7 @@ const I18N = {
     },
 
     cat: {
-      hungryHint: 'Tsuki is meowing, he looks hungry.',
-      movedTitle: 'Nobody left in the kitchen',
-      movedText: 'Tsuki has run off! He can\'t be far.'
+      hungryHint: 'Tsuki is meowing, he looks hungry.'
     },
 
     steps: {
@@ -251,7 +247,7 @@ const I18N = {
       },
       'feed-tsuki': {
         objective: 'Find Tsuki and give him the fish',
-        hint: 'Tsuki has left the kitchen. He is hiding somewhere in the flat.',
+        hint: 'Tsuki is wandering around the flat. Find him to give him the fish.',
         title: 'Tsuki is won over',
         text: 'He wolfs the fish down in three bites, rubs against your legs ' +
               'and finally lets himself be carried. Belly full, it is now ' +

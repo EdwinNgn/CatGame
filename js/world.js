@@ -52,7 +52,18 @@ class World {
         fed: false,
         carried: false,
         atHome: false,
-        phase: 0
+        phase: 0,
+
+        /**
+         * Déambulation : le chat vagabonde dans l'appartement jusqu'à ce
+         * qu'on le nourrisse. `target` est la case qu'il rejoint, `pauseUntil`
+         * l'instant où il repart après s'être arrêté pour renifler.
+         */
+        target: null,
+        /** Itinéraire en cours vers la cible, une case par étape. */
+        path: null,
+        pauseUntil: 0,
+        facing: 1
       };
     }
 
@@ -131,38 +142,190 @@ class World {
   }
 
   /**
-   * Tsuki file se cacher dès qu'on récupère le poisson.
-   * @returns {boolean} vrai s'il a effectivement bougé
+   * Fait déambuler Tsuki dans l'appartement.
+   *
+   * Il choisit une case libre au hasard, s'y rend en ligne droite, s'arrête un
+   * moment, puis repart ailleurs. Il ne traverse ni les murs ni les meubles :
+   * s'il se bloque, il abandonne sa cible et en choisit une autre.
+   *
+   * Volontairement simple, sans recherche de chemin : à cette échelle un
+   * chat qui hésite et change d'avis est plus crédible qu'un chat qui
+   * calcule l'itinéraire optimal. Il peut donc mettre du temps à sortir
+   * d'une pièce, ce qui est exactement le comportement voulu.
+   *
+   * @param {number} time horodatage de l'image courante
    */
-  moveCatToHideout() {
-    const target = CONFIG.cat && CONFIG.cat.movesTo;
-    if (!this.cat || !target) return false;
+  wanderCat(time) {
+    const cat = this.cat;
+    if (!cat || cat.carried || cat.atHome) return;
+
+    const cfg = (CONFIG.cat && CONFIG.cat.wander) || {};
+    if (cfg.enabled === false) return;
 
     const ts = this.tileSize;
-    const x = (target.col + 0.5) * ts;
-    const y = (target.row + 0.5) * ts;
+    const speed = cfg.speed || 0.9;
 
-    // Sécurité : ne le téléporte pas dans un mur ou un meuble.
-    if (!this.isWalkable(x, y)) {
-      console.warn(
-        `[plan] La cachette de ${CONFIG.cat.name} (ligne ${target.row + 1}, ` +
-        `colonne ${target.col + 1}) n'est pas une case libre. Il reste sur place.`
-      );
-      return false;
+    // En pause : il renifle, il ne bouge pas.
+    if (time < cat.pauseUntil) return;
+
+    const pause = () => {
+      const min = cfg.pauseMin === undefined ? 700 : cfg.pauseMin;
+      const max = cfg.pauseMax === undefined ? 2600 : cfg.pauseMax;
+      cat.pauseUntil = time + min + Math.random() * (max - min);
+    };
+
+    /*
+     * Cible atteinte : il s'arrête un moment AVANT d'en choisir une autre.
+     * La première version armait la pause juste après avoir choisi la cible,
+     * donc il s'immobilisait avant chaque départ et passait 93 % du temps
+     * à l'arrêt sans jamais traverser l'appartement.
+     */
+    if (cat.target && Math.hypot(cat.target.x - cat.x, cat.target.y - cat.y) < ts * 0.4) {
+      cat.target = null;
+      cat.path = null;
+      pause();
+      return;
     }
 
-    this.cat.x = x;
-    this.cat.y = y;
-    this.cat.hidden = true;
-    return true;
+    if (!cat.target) {
+      cat.target = this._pickCatTarget();
+      if (!cat.target) { pause(); return; }
+    }
+
+    /*
+     * Le chat suit un itinéraire calculé case par case, et non la ligne
+     * droite vers sa cible.
+     *
+     * En visant tout droit, il se cognait dès qu'un mur se trouvait entre lui
+     * et sa destination : il restait confiné à la cuisine et au salon, sans
+     * jamais trouver l'ouverture du couloir. Le chemin est recalculé
+     * seulement quand la cible change, ce qui reste très peu coûteux.
+     */
+    if (!cat.path || !cat.path.length) {
+      cat.path = this._catPathTo(cat.target);
+      // Destination injoignable (derrière une porte fermée) : il renonce.
+      if (!cat.path || !cat.path.length) {
+        cat.target = null;
+        cat.path = null;
+        pause();
+        return;
+      }
+    }
+
+    const next = cat.path[0];
+    const dx = next.x - cat.x;
+    const dy = next.y - cat.y;
+    const len = Math.hypot(dx, dy);
+
+    // Étape atteinte : on passe à la suivante.
+    if (len < speed) {
+      cat.x = next.x;
+      cat.y = next.y;
+      cat.path.shift();
+      return;
+    }
+
+    cat.x += (dx / len) * speed;
+    cat.y += (dy / len) * speed;
+    if (Math.abs(dx) > 0.01) cat.facing = dx > 0 ? 1 : -1;
   }
 
-  /** La pièce où Tsuki se cache après avoir entendu le poisson. */
-  get catHideoutRoom() {
-    const target = CONFIG.cat && CONFIG.cat.movesTo;
-    if (!target) return null;
+  /**
+   * Itinéraire du chat vers un point, en cases praticables.
+   *
+   * Parcours en largeur sur la grille, comme les contrôles d'accessibilité :
+   * c'est suffisant à cette taille de plan et ça garantit qu'il trouve les
+   * portes. Les pièces encore fermées sont exclues.
+   *
+   * @returns {{x:number,y:number}[]|null} les centres de cases à suivre
+   */
+  _catPathTo(target) {
     const ts = this.tileSize;
-    return this.roomAt((target.col + 0.5) * ts, (target.row + 0.5) * ts);
+    const start = { col: Math.floor(this.cat.x / ts), row: Math.floor(this.cat.y / ts) };
+    const goal = { col: Math.floor(target.x / ts), row: Math.floor(target.y / ts) };
+    if (start.col === goal.col && start.row === goal.row) return [];
+
+    const passable = (c, r) => {
+      if (c < 0 || r < 0 || c >= this.cols || r >= this.rows) return false;
+      if (!WALKABLE.has(this.tiles[r][c])) return false;
+      const room = this.roomAt((c + 0.5) * ts, (r + 0.5) * ts);
+      return !(room && room.locked && !this.locks[room.locked]);
+    };
+
+    const key = (c, r) => r * this.cols + c;
+    const prev = new Map();
+    const seen = new Set([key(start.col, start.row)]);
+    const queue = [start];
+
+    while (queue.length) {
+      const cur = queue.shift();
+      if (cur.col === goal.col && cur.row === goal.row) {
+        // Remonte le chemin depuis l'arrivée.
+        const out = [];
+        let node = cur;
+        while (node) {
+          out.unshift({ x: (node.col + 0.5) * ts, y: (node.row + 0.5) * ts });
+          node = prev.get(key(node.col, node.row));
+        }
+        out.shift(); // la case de départ, déjà occupée
+        return out;
+      }
+
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dc, dr]) => {
+        const c = cur.col + dc;
+        const r = cur.row + dr;
+        const k = key(c, r);
+        if (seen.has(k) || !passable(c, r)) return;
+        seen.add(k);
+        prev.set(k, cur);
+        queue.push({ col: c, row: r });
+      });
+    }
+    return null;
+  }
+
+  /**
+   * Une case libre au hasard pour la balade du chat.
+   *
+   * La destination est cherchée dans un rayon limité (`maxHop`) : le chat
+   * fait de petits trajets successifs au lieu de viser l'autre bout du plan,
+   * ce qui donne une allure de flânerie et évite qu'il traverse tout
+   * l'appartement pendant qu'on le cherche.
+   */
+  _pickCatTarget() {
+    const ts = this.tileSize;
+    const cat = this.cat;
+    const cfg = (CONFIG.cat && CONFIG.cat.wander) || {};
+    const hop = (cfg.maxHop || 9) * ts;
+
+    const c0 = Math.floor(cat.x / ts);
+    const r0 = Math.floor(cat.y / ts);
+    const span = Math.ceil(hop / ts);
+
+    for (let i = 0; i < 60; i++) {
+      const c = c0 + Math.floor((Math.random() * 2 - 1) * span);
+      const r = r0 + Math.floor((Math.random() * 2 - 1) * span);
+      if (c < 0 || r < 0 || c >= this.cols || r >= this.rows) continue;
+      if (!WALKABLE.has(this.tiles[r][c])) continue;
+
+      // Jamais dans une pièce encore fermée : il n'a pas les clés.
+      const room = this.roomAt((c + 0.5) * ts, (r + 0.5) * ts);
+      if (room && room.locked && !this.locks[room.locked]) continue;
+
+      const x = (c + 0.5) * ts;
+      const y = (r + 0.5) * ts;
+      // Ni sur place, ni au-delà du rayon de flânerie.
+      const d = Math.hypot(x - cat.x, y - cat.y);
+      if (d < ts * 1.5 || d > hop) continue;
+      return { x, y };
+    }
+    return null;
+  }
+
+  /** Le chat tient-il sur cette case ? Même principe que pour les joueurs. */
+  _catCanStand(x, y, r) {
+    return [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]]
+      .every(([dx, dy]) => this.isWalkable(x + dx, y + dy));
   }
 
   /**

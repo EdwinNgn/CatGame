@@ -153,9 +153,10 @@ const CONFIG = {
   /**
    * Le chat de la maison.
    *
-   * `movesTo` est la case où il part se cacher dès qu'on met la main sur le
-   * poisson : il file à la salle de bain, et il faut aller le chercher.
-   * Mets `movesTo: null` pour qu'il reste en cuisine.
+   * Tsuki se promène dans tout l'appartement tant qu'on ne l'a pas nourri :
+   * il faut donc le chercher. Il ne va jamais dans une pièce encore fermée,
+   * et sa présence ne lève pas le voile du brouillard — seuls les joueurs
+   * découvrent les pièces.
    *
    * Ses textes sont dans `I18N.<langue>.cat` (js/i18n.js).
    */
@@ -163,8 +164,26 @@ const CONFIG = {
     name: 'Tsuki',
     fur: '#4f4a46',
     belly: '#e8e2d8',
-    movesTo: { col: 20, row: 24 },
-    movedIcon: ICONS.paw
+
+    /** Sa déambulation. Mets `enabled: false` pour qu'il reste immobile. */
+    wander: {
+      enabled: true,
+      /**
+       * Vitesse en pixels par image. Les joueurs avancent à 2,6 : le chat
+       * reste plus lent, mais assez vif pour changer de pièce sans qu'on
+       * l'attende. À 0,9 il mettait plus de deux minutes à traverser.
+       */
+      speed: 1.7,
+      /** Durée d'arrêt entre deux déplacements, en millisecondes. */
+      pauseMin: 400,
+      pauseMax: 1400,
+      /**
+       * Distance maximale d'une destination, en cases. Le chat fait des
+       * petits trajets plutôt qu'une traversée complète : il paraît ainsi
+       * flâner, et on le retrouve sans courir après lui à travers le plan.
+       */
+      maxHop: 9
+    }
   },
 
   /**

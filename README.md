@@ -24,9 +24,9 @@ python3 -m http.server 8000
 1. **Trouver la clé** de notre chambre, cachée dans le salon.
 2. **Ouvrir notre chambre** avec cette clé.
 3. **Récupérer le poisson** posé près du lit.
-4. **Retrouver Tsuki et lui donner le poisson.** Il attendait en cuisine,
-   mais il a filé à la salle de bain en entendant le papier du poisson.
-   Rassasié, il se laisse enfin porter.
+4. **Retrouver Tsuki et lui donner le poisson.** Il se promène dans tout
+   l'appartement, il faut donc le chercher. Rassasié, il se laisse enfin
+   porter.
 5. **Porter Tsuki jusqu'à sa chambre.** Il s'installe et pousse du bout de la
    patte une deuxième clé.
 6. **Ramasser cette clé.**
@@ -45,17 +45,28 @@ croiser Tsuki les mains vides vous rappelle qu'il a faim.
 
 ### Tsuki
 
+Tant qu'on ne l'a pas nourri, Tsuki se promène dans tout l'appartement : sa
+position de départ dans le plan (`t`) n'est qu'un point de départ, il faut
+ensuite le chercher. Il choisit une destination au hasard, y va en contournant
+les meubles, souffle un instant, puis repart.
+
+Deux garde-fous : il n'entre jamais dans une pièce encore fermée, et **son
+passage ne lève pas le brouillard** — seuls les joueurs découvrent les pièces.
+Il s'immobilise dès qu'on le porte, et pour de bon une fois installé dans sa
+chambre.
+
 Son comportement se règle dans `CONFIG.cat` :
 
 | Clé | Rôle |
 |---|---|
 | `name`, `fur`, `belly` | Nom et couleurs du pelage. |
-| `hungryHint` | Le message affiché quand on le croise sans poisson. |
-| `movesTo` | La case où il part se cacher dès qu'on récupère le poisson (`{ col, row }`). Mets `null` pour qu'il reste en cuisine. |
-| `movedCard` | La fenêtre qui explique sa disparition. |
+| `wander.enabled` | `false` pour qu'il reste sur sa case de départ. |
+| `wander.speed` | Vitesse en pixels par image. À 1,7 il est plus lent qu'un joueur (2,6) mais change de pièce sans qu'on l'attende. |
+| `wander.pauseMin`, `wander.pauseMax` | Durée d'arrêt entre deux trajets, en millisecondes. Le jeu tire au hasard entre les deux. |
+| `wander.maxHop` | Distance maximale d'une destination, en cases. Petit (9 par défaut) il flâne dans le coin ; grand, il traverse le plan et devient dur à retrouver. |
 
-Le jeu vérifie que `movesTo` tombe bien sur une case libre : si tu le
-téléportes dans un mur, il reste sur place et te le dit dans la console.
+Le message affiché quand on le croise les mains vides est dans
+`I18N.<langue>.cat.hungryHint`.
 
 ## Dessiner votre appartement
 
@@ -169,7 +180,7 @@ les valeurs, et ajoute son libellé dans `_buildLangSwitch` (`js/ui.js`).
 |---|---|
 | `quest.steps` | Les 9 étapes : objectif affiché, indice, message de porte fermée, et la carte qui s'ouvre à la réussite. Ne change pas les `id`. |
 | `blackout` | La panne du début : `haloRadius` le rayon éclairé autour des joueurs en cases, `keepLitRooms` les pièces qui restent découvertes après le rétablissement. |
-| `cat` | Le nom et les couleurs du chat. |
+| `cat` | Le nom et les couleurs du chat, et sa déambulation (`wander`). |
 | `reveal` | L'annonce : titre, texte, date (`date: ''` pour masquer), libellé des deux boutons (`okButton`, `replayButton`) et `autoDelay`, le délai en millisecondes avant déclenchement automatique dans la chambre (`0` pour n'avoir que la proximité). |
 | `world.tileSize` | Taille d'une case en pixels dans le plan. |
 | `world.minTileSize` | Taille minimale d'une case à l'écran. En dessous, le jeu zoome et la caméra suit le joueur au lieu de tout afficher. Augmente pour un zoom plus serré. |
@@ -200,8 +211,6 @@ sans jamais sortir du plan. Le seuil se règle avec `world.minTileSize`.
 La mise en page est recalculée à la rotation de l'écran et au
 redimensionnement de la fenêtre, et le canvas est dessiné à la résolution de
 l'appareil pour rester net sur les écrans haute densité.
-
-## Structure
 
 ## Les emoji
 

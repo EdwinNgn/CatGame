@@ -264,6 +264,8 @@ const Game = {
   },
 
   _loop(time) {
+    // Mémorisé pour que la mise à jour puisse s'en servir (balade du chat).
+    this._now = time;
     this._update();
     this._draw(time);
     this._raf = requestAnimationFrame((t) => this._loop(t));
@@ -290,6 +292,9 @@ const Game = {
       const holder = this.players[this.carrierIndex] || this.players[0];
       this.world.cat.x = holder.x;
       this.world.cat.y = holder.y - this.world.tileSize * 0.42;
+    } else {
+      // Sinon il vagabonde : il faut aller le trouver.
+      this.world.wanderCat(this._now);
     }
 
     this._checkStep();
@@ -358,17 +363,9 @@ const Game = {
             this.carrierIndex = i;
             UI.flashPickup(Lang.t('steps.' + step.id + '.toast'));
 
-            // Tsuki a entendu le papier : il file se cacher.
-            const moved = this.world.moveCatToHideout();
-            this._completeStep(() => {
-              if (moved) {
-                UI.showCard({
-                  icon: CONFIG.cat.movedIcon,
-                  title: Lang.t('cat.movedTitle'),
-                  text: Lang.t('cat.movedText')
-                }, () => this._syncObjective());
-              }
-            });
+            // Plus de message sur sa disparition : Tsuki se promène en
+            // permanence, il n'a jamais eu de place fixe à quitter.
+            this._completeStep();
             return;
           }
         }
